@@ -20,14 +20,14 @@
     <h1>Tiktok Scraper</h1>
 
     <!-- Nút kết nối google -->
-    <button
+    <!-- <button
         id="connectGoogleBtn"
         type="button"
     >
         Kết nối Google
     </button>
 
-    <div id="googleAuthStatus"></div>
+    <div id="googleAuthStatus"></div> -->
 
 
     <!-- Ô điền URL Google Sheet -->
@@ -56,7 +56,7 @@
                 type="button"
                 disabled
             >
-                Export vào Google Sheet
+                Nhập vào Google Sheet
             </button>
 
         </div>
@@ -77,8 +77,17 @@
             <input
                 type="radio"
                 name="searchType"
-                value="keyword"
+                value="all"
                 checked
+            >
+            <span>Tất cả</span>
+        </label>
+
+        <label class="search-type-option">
+            <input
+                type="radio"
+                name="searchType"
+                value="keyword"
             >
             <span>Từ khóa</span>
         </label>
@@ -105,7 +114,7 @@
     ></textarea>
 
     <div class="filter-section">
-        <label>Verified</label>
+        <label>Verified (có tích xanh)</label>
 
         <div class="filter-body">
             <div class="radio-group">
@@ -437,7 +446,7 @@
                         1 tháng
                     </label>
 
-                    <label>
+                    <!-- <label>
                         <input
                             type="radio"
                             name="dateRange"
@@ -445,6 +454,15 @@
                             disabled
                         >
                         1 năm
+                    </label> -->
+                    <label>
+                        <input
+                            type="radio"
+                            name="dateRange"
+                            value="3m"
+                            disabled
+                        >
+                        3 tháng
                     </label>
                 </div>
             </div>

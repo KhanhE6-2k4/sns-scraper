@@ -29,6 +29,10 @@ import { createGoogleAuthRoutes } from './routes/google-auth-routes.js';
 import { GoogleSheetController } from './controllers/google-sheet-controller.js';
 import { createGoogleSheetRoutes } from './routes/google-sheet-routes.js';
 
+import { GoogleServiceAccountSheetService } from './services/google/google-service-account-sheet-service.js';
+import { GoogleServiceAccountController } from './controllers/google-service-account-controller.js';
+import { createGoogleServiceAccountRoutes } from './routes/google-service-account-routes.js';
+
 
 const app = express();
 
@@ -62,6 +66,9 @@ const googleSheetService = new GoogleSheetService({
 
 const downloadService = new DownloadService();
 
+const googleServiceAccountSheetService = new GoogleServiceAccountSheetService({
+  resultStorageService,
+});
 
 // Controller
 
@@ -80,6 +87,10 @@ const googleSheetController = new GoogleSheetController({
 
 const downloadController = new DownloadController({
   downloadService,
+});
+
+const googleServiceAccountController = new GoogleServiceAccountController({
+  googleServiceAccountSheetService,
 });
 
 // Middleware
@@ -163,3 +174,13 @@ app.use(
 );
 
 export default app;
+
+// Routes - Google Service Account
+
+app.use(
+  '/api/google-service-account',
+  createGoogleServiceAccountRoutes({
+    googleServiceAccountController,
+  })
+);
+
