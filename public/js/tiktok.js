@@ -159,7 +159,7 @@ exportGoogleSheetBtn.addEventListener(
         exportGoogleSheetBtn.disabled = true;
 
         googleSheetStatus.textContent =
-            'Đang export sang Google Sheet...';
+            'Đang nhập dữ liệu sang Google Sheet...';
 
         try {
 
@@ -193,7 +193,7 @@ exportGoogleSheetBtn.addEventListener(
                     // 'Export Google Sheet thất bại.'
                     result.message ||
                     result.error ||
-                    'Export Google Sheet thất bại.'
+                    'Nhập dữ liệu sang Google Sheet thất bại.'
                 );
             }
 
