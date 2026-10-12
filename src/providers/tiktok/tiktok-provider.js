@@ -21,6 +21,13 @@ export class TikTokProvider extends SocialPlatformProvider {
       sortBy = 'relevance'
     } = criteria;
 
+    const searchOptions = {
+      dateFrom,
+      dateTo,
+      limit,
+      sortBy
+    };
+
     if (searchType === 'hashtag') {
       return this.client.scrapeHashtags({
         hashtags: queries,
@@ -39,6 +46,29 @@ export class TikTokProvider extends SocialPlatformProvider {
         limit,
         sortBy
       });
+    }
+
+    if (searchType === 'all') {
+      const keywordLimit = Math.ceil(limit / 2);
+      const hashtagLimit = Math.ceil(limit / 2);
+
+      const [keywordResults, hashtagResults] = await Promise.all([
+        this.client.scrapeKeywords({
+          queries,
+          ...searchOptions,
+          limit: keywordLimit
+        }),
+        this.client.scrapeHashtags({
+          hashtags: queries,
+          ...searchOptions,
+          limit: hashtagLimit
+        })
+      ]);
+
+      return [
+        ...keywordResults,
+        ...hashtagResults
+      ];
     }
 
     throw new Error(

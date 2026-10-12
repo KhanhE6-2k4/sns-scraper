@@ -4,15 +4,11 @@ export class DownloadController {
   }
 
   download = async (req, res) => {
-    if (!req.session.userId) {
-      return res.status(401).send('Bạn chưa đăng nhập');
-    }
-
     try {
-      const { filePath, fileName } = await this.downloadService.getDownloadInfo(
-        req.session.userId,
-        req.params.file
-      );
+      const { filePath, fileName } =
+        await this.downloadService.getDownloadInfo(
+          req.params.file
+        );
 
       return res.download(filePath, fileName);
     } catch (error) {

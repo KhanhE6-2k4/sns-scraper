@@ -7,13 +7,13 @@ export class DiscoveryController {
 
   discover = async (req, res) => {
     try {
-      const userId = req.session.userId;
+      // const userId = req.session.userId;
 
-      if (!userId) {
-        return res.status(401).json({
-          error: 'Unauthorized',
-        });
-      }
+      // if (!userId) {
+      //   return res.status(401).json({
+      //     error: 'Unauthorized',
+      //   });
+      // }
 
       const {
         queries,
@@ -63,7 +63,8 @@ export class DiscoveryController {
         },
       });
 
-      const result = await this.resultStorageService.saveResults(userId, videos);
+      // const result = await this.resultStorageService.saveResults(userId, videos);
+      const result = await this.resultStorageService.saveResults(videos);
 
       return res.json({
         success: true,
