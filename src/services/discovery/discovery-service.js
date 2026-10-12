@@ -9,9 +9,9 @@ export class DiscoveryService {
     this.providerRegistry = providerRegistry;
   }
 
-  async discover(criteria) {
-    const provider = this.providerRegistry.get(criteria.platform);
-    const items = await provider.discover(criteria);
+  async discover(request) {
+    const provider = this.providerRegistry.get(request.platform);
+    const items = await provider.discover(request);
 
     let contents = items.map(item => provider.normalize(
       item,
@@ -22,7 +22,7 @@ export class DiscoveryService {
 
     contents = contents.filter(isValidSocialContent);
 
-    contents = rangeFilterSocialContent(contents, criteria.filters ?? {});
+    contents = rangeFilterSocialContent(contents, request.filters ?? {});
 
     contents = deduplicateSocialContent(contents);
 

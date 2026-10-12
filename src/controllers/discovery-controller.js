@@ -1,9 +1,10 @@
-
+import { DiscoveryRequest } from '../dto/discovery-request.js';
 export class DiscoveryController {
   constructor({ discoveryService, resultStorageService }) {
     this.discoveryService = discoveryService;
     this.resultStorageService = resultStorageService;
   }
+
 
   discover = async (req, res) => {
     try {
@@ -14,54 +15,9 @@ export class DiscoveryController {
       //     error: 'Unauthorized',
       //   });
       // }
+      const request = new DiscoveryRequest(req.body);
 
-      const {
-        queries,
-        searchType,
-        limit = 10,
-        sortBy = 'relevance',
-        dateFrom,
-        dateTo,
-
-        minFollowers,
-        maxFollowers,
-
-        minLikes,
-        maxLikes,
-
-        minVideoCount,
-
-        verifiedFilter = 'any',
-      } = req.body;
-
-      const videos = await this.discoveryService.discover({
-        platform: 'tiktok',
-        queries,
-        searchType,
-        limit,
-        sortBy,
-
-        dateFrom,
-        dateTo,
-
-        filters: {
-          followers: {
-            min: minFollowers,
-            max: maxFollowers,
-          },
-
-          likes: {
-            min: minLikes,
-            max: maxLikes,
-          },
-
-          videoCount: {
-            min: minVideoCount,
-          },
-
-          verified: verifiedFilter,
-        },
-      });
+      const videos = await this.discoveryService.discover(request);
 
       // const result = await this.resultStorageService.saveResults(userId, videos);
       const result = await this.resultStorageService.saveResults(videos);

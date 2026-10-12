@@ -417,11 +417,22 @@ button:disabled {
     font-size: 12px;
 }
 
-.filter-options.disabled {
+/*.filter-options.disabled {
     opacity: 0.55;
 }
 
 .filter-options input:disabled {
+    color: #9ca3af;
+    background: #f3f4f6;
+    border-color: var(--color-border);
+    cursor: not-allowed;
+}*/
+
+
+/* Trạng thái ô nhập liệu bị vô hiệu hóa */
+input:disabled,
+textarea:disabled,
+select:disabled {
     color: #9ca3af;
     background: #f3f4f6;
     border-color: var(--color-border);

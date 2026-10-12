@@ -1,22 +1,54 @@
 import fs from 'fs/promises';
 import path from 'path';
 
+// function escapeCsv(value) {
+//     if (value === null || value === undefined) {
+//         return '';
+//     }
+
+//     const stringValue = String(value);
+
+//     if (
+//         stringValue.includes(',') ||
+//         stringValue.includes('"') ||
+//         stringValue.includes('\n')
+//     ) {
+//         return `"${stringValue.replace(/"/g, '""')}"`;
+//     }
+
+//     return stringValue;
+// }
+
+function getCreatorProfileUrl(platform, username) {
+  if (!username) return '';
+
+  switch (platform) {
+    case 'instagram':
+      return `https://www.instagram.com/${username}/`;
+
+    case 'tiktok':
+      return `https://www.tiktok.com/@${username}`;
+
+    case 'youtube':
+      return `https://www.youtube.com/@${username}`;
+
+    default:
+      return '';
+  }
+}
+
 function escapeCsv(value) {
-    if (value === null || value === undefined) {
-        return '';
-    }
+  if (value === null || value === undefined) {
+    return '';
+  }
 
-    const stringValue = String(value);
+  const stringValue = String(value);
 
-    if (
-        stringValue.includes(',') ||
-        stringValue.includes('"') ||
-        stringValue.includes('\n')
-    ) {
-        return `"${stringValue.replace(/"/g, '""')}"`;
-    }
+  if (/[",\r\n]/.test(stringValue)) {
+    return `"${stringValue.replace(/"/g, '""')}"`;
+  }
 
-    return stringValue;
+  return stringValue;
 }
 
 export async function exportCreatorsCsv(videos, outputPath) {
@@ -37,24 +69,29 @@ export async function exportCreatorsCsv(videos, outputPath) {
             continue;
         }
 
-        if (!creators.has(creatorId)) {
-            creators.set(creatorId, {
-                creator: creator.username || '',
-                creatorName: creator.nickname || '',
-                profileUrl: creator.username
-                    ? `https://www.tiktok.com/@${creator.username}`
-                    : '',
-                verified: creator.verified ?? false,
-                followers: creator.followers ?? 0,
-                totalLikes: creator.totalLikes ?? 0,
-                videoCount: creator.videoCount ?? 0,
-                videosFound: 0,
-                keywords: new Set(),
-                bio: creator.bio || '',
-            });
+        const mapKey = `${video.platform ?? 'tiktok'}:${creatorId}`;
+
+
+        if (!creators.has(mapKey)) {
+          const profileUrl = getCreatorProfileUrl(
+              video.platform ?? 'tiktok',
+              creator.username
+          );
+          creators.set(mapKey, {
+              creator: creator.username || '',
+              creatorName: creator.nickname || '',
+              profileUrl,
+              verified: creator.verified ?? false,
+              followers: creator.followers ?? 0,
+              totalLikes: creator.totalLikes ?? 0,
+              videoCount: creator.videoCount ?? 0,
+              videosFound: 0,
+              keywords: new Set(),
+              bio: creator.bio || '',
+          });
         }
 
-        const current = creators.get(creatorId);
+        const current = creators.get(mapKey);
 
         current.videosFound += 1;
 
@@ -81,41 +118,39 @@ export async function exportCreatorsCsv(videos, outputPath) {
     ];
 
     for (const creator of creators.values()) {
-      rows.push([
-        creator.creator,
-        creator.creatorName,
-        creator.profileUrl,
-        creator.verified,
-        creator.followers,
-        creator.totalLikes,
-        creator.videoCount,
-        creator.videosFound,
-        [...creator.keywords].join('; '),
-        creator.bio,
-      ]);
-            // .map(escapeCsv)
-            // .join(','));
-  }
+        rows.push([
+            creator.creator,
+            creator.creatorName,
+            creator.profileUrl,
+            creator.verified,
+            creator.followers,
+            creator.totalLikes,
+            creator.videoCount,
+            creator.videosFound,
+            [...creator.keywords].join('; '),
+            creator.bio,
+        ]);
+    }
     if (outputPath) {
-      const csvRows = rows.map(row => row.map(escapeCsv).join(','));
+        const csvRows = rows.map(row => row.map(escapeCsv).join(','));
 
-      const csv = '\uFEFF' + csvRows.join('\n');
+        const csv = '\uFEFF' + csvRows.join('\n');
 
-      await fs.mkdir(path.dirname(outputPath), {
-        recursive: true,
-      });
+        await fs.mkdir(path.dirname(outputPath), {
+            recursive: true,
+        });
 
-      await fs.writeFile(
-        outputPath,
-        csv,
-        'utf8'
-      );
+        await fs.writeFile(
+            outputPath,
+            csv,
+            'utf8'
+        );
     }
 
 
-  return {
-      rows,
-      creatorCount: creators.size,
-      outputPath,
+    return {
+        rows,
+        creatorCount: creators.size,
+        outputPath,
     };
 }
