@@ -1,0 +1,57 @@
+import fs from 'fs/promises';
+import path from 'path';
+
+const ALLOWED_FILES = {
+  'results.json': 'results.json',
+  'results.csv': 'results.csv',
+};
+
+export class DownloadService {
+  getAllowedFile(fileName) {
+    return ALLOWED_FILES[fileName] ?? null;
+  }
+
+  getFilePath(fileName) {
+    const allowedFile = this.getAllowedFile(fileName);
+
+    if (!allowedFile) {
+      throw new Error('File not found!');
+    }
+
+    return path.join(
+      process.cwd(),
+      'data',
+      'results',
+      allowedFile
+    );
+  }
+
+  async ensureFileExist(filePath) {
+    try {
+      await fs.access(filePath);
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        throw new Error('File not found!');
+      }
+
+      throw error;
+    }
+  }
+
+  async getDownloadInfo(fileName) {
+    const safeFileName = this.getAllowedFile(fileName);
+
+    if (!safeFileName) {
+      throw new Error('File not found!');
+    }
+
+    const filePath = this.getFilePath(safeFileName);
+
+    await this.ensureFileExist(filePath);
+
+    return {
+      filePath,
+      fileName: safeFileName,
+    };
+  }
+}

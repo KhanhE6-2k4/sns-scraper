@@ -4,37 +4,37 @@ const result = document.getElementById('result');
 
 
 // Google Auth
-const connectGoogleBtn =
-    document.getElementById('connectGoogleBtn');
+// const connectGoogleBtn =
+//     document.getElementById('connectGoogleBtn');
 
-const googleAuthStatus =
-    document.getElementById('googleAuthStatus');
+// const googleAuthStatus =
+//     document.getElementById('googleAuthStatus');
 
-connectGoogleBtn.addEventListener(
-    'click',
-    () => {
-        window.location.href =
-            '/auth/google';
-    }
-);
+// connectGoogleBtn.addEventListener(
+//     'click',
+//     () => {
+//         window.location.href =
+//             '/api/auth/google';
+//     }
+// );
 
-const params =
-    new URLSearchParams(
-        window.location.search
-    );
+// const params =
+//     new URLSearchParams(
+//         window.location.search
+//     );
 
-const googleAuth =
-    params.get('googleAuth');
+// const googleAuth =
+//     params.get('googleAuth');
 
-if (googleAuth === 'success') {
-    googleAuthStatus.textContent =
-        'Đã kết nối Google thành công.';
-}
+// if (googleAuth === 'success') {
+//     googleAuthStatus.textContent =
+//         'Đã kết nối Google thành công.';
+// }
 
-if (googleAuth === 'error') {
-    googleAuthStatus.textContent =
-        'Kết nối Google thất bại.';
-}
+// if (googleAuth === 'error') {
+//     googleAuthStatus.textContent =
+//         'Kết nối Google thất bại.';
+// }
 
 // Google sheet
 
@@ -90,7 +90,8 @@ validateGoogleSheetBtn.addEventListener(
 
             const response =
                 await fetch(
-                    '/api/google-sheets/validate',
+                    // '/api/google-sheets/validate',
+                    '/api/google-service-account/validate',
                     {
                         method: 'POST',
                         headers: {
@@ -108,6 +109,9 @@ validateGoogleSheetBtn.addEventListener(
 
             if (!response.ok || !result.success) {
                 throw new Error(
+                    // result.error ||
+                    // 'Không thể kiểm tra Google Sheet.'
+                    result.message ||
                     result.error ||
                     'Không thể kiểm tra Google Sheet.'
                 );
@@ -155,13 +159,14 @@ exportGoogleSheetBtn.addEventListener(
         exportGoogleSheetBtn.disabled = true;
 
         googleSheetStatus.textContent =
-            'Đang export sang Google Sheet...';
+            'Đang nhập dữ liệu sang Google Sheet...';
 
         try {
 
             const response =
                 await fetch(
-                    '/api/google-sheets/export',
+                    // '/api/google-sheets/export',
+                    '/api/google-service-account/export',
                     {
                         method: 'POST',
 
@@ -184,13 +189,16 @@ exportGoogleSheetBtn.addEventListener(
                 !result.success
             ) {
                 throw new Error(
+                    // result.error ||
+                    // 'Export Google Sheet thất bại.'
+                    result.message ||
                     result.error ||
-                    'Export Google Sheet thất bại.'
+                    'Nhập dữ liệu sang Google Sheet thất bại.'
                 );
             }
 
             googleSheetStatus.textContent =
-                `✓ Đã export ${result.creatorCount} creators vào tab "${result.sheetTitle}"`;
+                `✓ Đã nhập dữ liệu của ${result.creatorCount} creators vào tab "${result.sheetTitle}"`;
 
         } catch (error) {
 
@@ -532,16 +540,30 @@ runBtn.addEventListener('click', async () => {
                 from.setMonth(from.getMonth() - 1);
                 break;
 
-            case '1y':
-                from.setFullYear(from.getFullYear() - 1);
+            // case '1y':
+            //     from.setFullYear(from.getFullYear() - 1);
+            //     break;
+            case '3m':
+                from.setMonth(from.getMonth() - 3);
                 break;
         }
 
-        const formatDate = date =>
-            date.toISOString().split('T')[0];
+        // const formatDate = date =>
+        //     date.toISOString().split('T')[0];
+
+        // tránh lệch ngày do toISOString() chuyển sang UTC
+        const formatDate = date => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+
+            return `${year}-${month}-${day}`;
+        };
 
         dateFrom = formatDate(from);
         dateTo = formatDate(to);
+
+        
     }
     // const dateMode = document.querySelector(
     //     'input[name="dateMode"]:checked'
