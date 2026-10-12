@@ -1,87 +1,92 @@
-// ResultStorageService
-//  - tạo thư mục user
-//  - lưu results.json
-//  - tạo results.csv
-
-
 import fs from 'fs/promises';
 import path from 'path';
 
 export class ResultStorageService {
-	constructor({
-		exportCreatorsCsv
-	}) {
-		this.exportCreatorsCsv = exportCreatorsCsv;
-	}
+  constructor({ exportCreatorsCsv }) {
+    this.exportCreatorsCsv = exportCreatorsCsv;
+  }
 
-	getUserDirectory(userId) {
-		return path.join(
-			process.cwd(),
-			'data',
-			'users',
-			String(userId)
-		);
-	}
+  getResultsDirectory() {
+    return path.join(
+      process.cwd(),
+      'data',
+      'results'
+    );
+  }
 
-	getResultsCsvPath(userId) {
-		return path.join(
-			this.getUserDirectory(userId),
-			'results.csv'
-		);
-	}
+  getResultsJsonPath() {
+    return path.join(
+      this.getResultsDirectory(),
+      'results.json'
+    );
+  }
 
-	async saveResults(userId, videos) {
-		const userDirectory = this.getUserDirectory(userId);
+  getResultsCsvPath() {
+    return path.join(
+      this.getResultsDirectory(),
+      'results.csv'
+    );
+  }
 
-		await fs.mkdir(userDirectory, {
-			recursive: true,
-		});
+  async saveResults(videos) {
+    const resultsDirectory = this.getResultsDirectory();
 
-		const jsonPath = path.join(
-			userDirectory,
-			'results.json'
-		);
+    await fs.mkdir(resultsDirectory, {
+      recursive: true,
+    });
 
-		const csvPath = path.join(
-			userDirectory,
-			'results.csv'
-		);
+    const jsonPath = this.getResultsJsonPath();
+    const csvPath = this.getResultsCsvPath();
 
-		await fs.writeFile(
-			jsonPath,
-			JSON.stringify(videos, null, 2),
-			'utf8'
-		);
+    await fs.writeFile(
+      jsonPath,
+      JSON.stringify(videos, null, 2),
+      'utf8'
+    );
 
-		const csvResult = await this.exportCreatorsCsv(
-			videos,
-			csvPath
-		);
+    const csvResult = await this.exportCreatorsCsv(
+      videos,
+      csvPath
+    );
 
-		return {
-			jsonPath,
-			csvPath,
-			creatorCount: csvResult.creatorCount,
-		};
-	}
+    return {
+      jsonPath,
+      csvPath,
+      creatorCount: csvResult.creatorCount,
+    };
+  }
 
-	async getResultsCsv(userId) {
-		const csvPath =
-			this.getResultsCsvPath(userId);
+  async getResultsJson() {
+    try {
+      return await fs.readFile(
+        this.getResultsJsonPath(),
+        'utf8'
+      );
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        throw new Error(
+          'Chưa có kết quả tìm kiếm để tải.'
+        );
+      }
 
-		try {
-			return await fs.readFile(
-				csvPath,
-				'utf8'
-			);
-		} catch (error) {
-			if (error.code === 'ENOENT') {
-				throw new Error(
-					'Chưa có kết quả tìm kiếm để export.'
-				);
-			}
+      throw error;
+    }
+  }
 
-			throw error;
-		}
-	}
+  async getResultsCsv() {
+    try {
+      return await fs.readFile(
+        this.getResultsCsvPath(),
+        'utf8'
+      );
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        throw new Error(
+          'Chưa có kết quả tìm kiếm để export.'
+        );
+      }
+
+      throw error;
+    }
+  }
 }

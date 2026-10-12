@@ -29,6 +29,10 @@ import { createGoogleAuthRoutes } from './routes/google-auth-routes.js';
 import { GoogleSheetController } from './controllers/google-sheet-controller.js';
 import { createGoogleSheetRoutes } from './routes/google-sheet-routes.js';
 
+import { GoogleServiceAccountSheetService } from './services/google/google-service-account-sheet-service.js';
+import { GoogleServiceAccountController } from './controllers/google-service-account-controller.js';
+import { createGoogleServiceAccountRoutes } from './routes/google-service-account-routes.js';
+
 
 const app = express();
 
@@ -62,6 +66,9 @@ const googleSheetService = new GoogleSheetService({
 
 const downloadService = new DownloadService();
 
+const googleServiceAccountSheetService = new GoogleServiceAccountSheetService({
+  resultStorageService,
+});
 
 // Controller
 
@@ -82,11 +89,40 @@ const downloadController = new DownloadController({
   downloadService,
 });
 
+const googleServiceAccountController = new GoogleServiceAccountController({
+  googleServiceAccountSheetService,
+});
+
 // Middleware
 
 app.use(express.json());
 
-app.use(express.static('public'));
+app.use(express.static('public', { index: false }));
+
+// Trang giới thiệu
+app.get('/', (req, res) => {
+  res.sendFile('index.html', { root: 'public' });
+});
+
+// TikTok
+app.get('/tiktok', (req, res) => {
+  res.sendFile('tiktok.html', { root: 'public' });
+})
+
+// Privacy Policy
+app.get('/privacy', (req, res) => {
+  res.sendFile('privacy.html', { root: 'public' });
+});
+
+// Terms of Service
+app.get('/terms', (req, res) => {
+  res.sendFile('terms.html', { root: 'public' });
+});
+
+
+// app.get('/tiktok', (req, res) => {
+//   res.sendFile('index.html', { root: 'public' });
+// });
 
 app.set('trust proxy', 1);
 
@@ -138,3 +174,13 @@ app.use(
 );
 
 export default app;
+
+// Routes - Google Service Account
+
+app.use(
+  '/api/google-service-account',
+  createGoogleServiceAccountRoutes({
+    googleServiceAccountController,
+  })
+);
+

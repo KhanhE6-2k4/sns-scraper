@@ -11,7 +11,7 @@ export class DownloadService {
     return ALLOWED_FILES[fileName] ?? null;
   }
 
-  getUserFilePath(userId, fileName) {
+  getFilePath(fileName) {
     const allowedFile = this.getAllowedFile(fileName);
 
     if (!allowedFile) {
@@ -21,8 +21,7 @@ export class DownloadService {
     return path.join(
       process.cwd(),
       'data',
-      'users',
-      String(userId),
+      'results',
       allowedFile
     );
   }
@@ -31,21 +30,28 @@ export class DownloadService {
     try {
       await fs.access(filePath);
     } catch (error) {
-      throw new Error('File not found!');
+      if (error.code === 'ENOENT') {
+        throw new Error('File not found!');
+      }
+
+      throw error;
     }
   }
 
-  async getDownloadInfo(userId, fileName) {
+  async getDownloadInfo(fileName) {
     const safeFileName = this.getAllowedFile(fileName);
 
     if (!safeFileName) {
       throw new Error('File not found!');
     }
 
-    const filePath = this.getUserFilePath(userId, safeFileName);
+    const filePath = this.getFilePath(safeFileName);
 
     await this.ensureFileExist(filePath);
 
-    return { filePath, fileName: safeFileName };
+    return {
+      filePath,
+      fileName: safeFileName,
+    };
   }
 }
