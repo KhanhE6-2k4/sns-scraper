@@ -1,12 +1,11 @@
-
 import { ApifyClient } from 'apify-client';
 
-const ACTOR_ID = 'happitap/youtube-scraper';
+const ACTOR_ID = 'solidcode/youtube-scraper';
 
 const VALID_SORT_OPTIONS = [
   'relevance',
-  'upload_date',
-  'view_count',
+  'uploadDate',
+  'viewCount',
   'rating',
 ];
 
@@ -29,13 +28,13 @@ export class YouTubeClient {
 
   async scrape({
     queries = [],
-    startUrls = [],
+    // startUrls = [],
     limit = 10,
     sortBy = 'relevance',
     dateRange = 'any',
   } = {}) {
-    if (!Number.isInteger(limit) || limit < 1 || limit > 5000) {
-      throw new Error('limit must be an integer between 1 and 5000');
+    if (!Number.isInteger(limit) || limit < 1 || limit > 500) {
+      throw new Error('limit must be an integer between 1 and 500');
     }
 
     if (!VALID_SORT_OPTIONS.includes(sortBy)) {
@@ -51,27 +50,35 @@ export class YouTubeClient {
       .map(query => String(query).trim())
       .filter(Boolean);
 
-    const urls = startUrls
-      .map(url => String(url).trim())
-      .filter(Boolean);
+    // const urls = startUrls
+    //   .map(url => String(url).trim())
+    //   .filter(Boolean);
 
-    if (searchKeywords.length === 0 && urls.length === 0) {
-      throw new Error('At least one search keyword or YouTube URL is required');
+    if (searchKeywords.length === 0) {
+      throw new Error('At least one search keyword is required');
     }
 
+    // const input = {
+    //   maxVideos: limit,
+    //   sortBy,
+    //   dateFilter,
+    // };
+
     const input = {
-      maxVideos: limit,
+      maxResults: limit,
       sortBy,
-      dateFilter,
+      uploadDate: dateFilter,
+      country: 'vn',
+      language: 'vi',
     };
 
     if (searchKeywords.length > 0) {
-      input.searchKeywords = searchKeywords;
+      input.searchQueries = searchKeywords;
     }
 
-    if (urls.length > 0) {
-      input.startUrls = urls;
-    }
+    // if (urls.length > 0) {
+    //   input.startUrls = urls;
+    // }
 
     const run = await this.client.actor(ACTOR_ID).call(input);
 

@@ -211,19 +211,21 @@ runBtn.addEventListener('click', async () => {
     // --------------------------------------------------------
     // FOLLOWERS FILTER
     // --------------------------------------------------------
-    const isFilteredByFollowers = getCheckedValue('filterFollowers', 'no') === 'yes';
-    if (isFilteredByFollowers && !validateFollowers()) {
-        return;
-    }
-    const minFollowersText = document.getElementById('minFollowers').value.trim();
-    const maxFollowersText = document.getElementById('maxFollowers').value.trim();
+
+    // const isFilteredByFollowers = getCheckedValue('filterFollowers', 'no') === 'yes';
+    // if (isFilteredByFollowers && !validateFollowers()) {
+    //     return;
+    // }
+    // const minFollowersText = document.getElementById('minFollowers').value.trim();
+    // const maxFollowersText = document.getElementById('maxFollowers').value.trim();
+
     // --------------------------------------------------------
     // SORT BY
     // --------------------------------------------------------
     // YouTube Actor hỗ trợ:
     // relevance, upload_date, view_count, rating.
     // Mặc định sắp xếp theo độ liên quan.
-    const sortBy = 'relevance';
+    const sortBy = document.querySelector('input[name="sort"]:checked').value;
     // --------------------------------------------------------
     // DATE RANGE
     // --------------------------------------------------------
@@ -253,15 +255,15 @@ runBtn.addEventListener('click', async () => {
         dateRange,
     };
     // Chỉ gửi bộ lọc khi người dùng bật.
-    if (isFilteredByFollowers) {
-        payload.isFilteredByFollowers = true;
-        if (minFollowersText !== '') {
-            payload.minFollowers = Number(minFollowersText);
-        }
-        if (maxFollowersText !== '') {
-            payload.maxFollowers = Number(maxFollowersText);
-        }
-    }
+    // if (isFilteredByFollowers) {
+    //     payload.isFilteredByFollowers = true;
+    //     if (minFollowersText !== '') {
+    //         payload.minFollowers = Number(minFollowersText);
+    //     }
+    //     if (maxFollowersText !== '') {
+    //         payload.maxFollowers = Number(maxFollowersText);
+    //     }
+    // }
     // --------------------------------------------------------
     // CALL API
     // --------------------------------------------------------

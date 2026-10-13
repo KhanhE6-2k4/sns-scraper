@@ -13,7 +13,9 @@ function formatLocalDate(date) {
 }
 
 function getDateRange(dateRange) {
-  if (!dateRange) return {};
+  if (!dateRange || dateRange === 'all') {
+    return {};
+  } 
 
   const today = new Date();
   const from = new Date(today);
