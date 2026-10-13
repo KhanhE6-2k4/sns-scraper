@@ -1,12 +1,12 @@
 
-export function normalizeYouTubeVideo(item, keyword = '') {
+export function normalizeYouTubeVideo(item, query = '') {
   // Tách video ID từ URL nếu Actor không trả về ID riêng.
   const videoId =
     item.url?.match(/[?&]v=([^&]+)/)?.[1] ?? '';
 
   return {
     platform: 'youtube',
-    keyword,
+    query,
     title: item.title ?? '',
     url: item.url ?? '',
     content: item.description ?? item.title ?? '',
@@ -43,9 +43,9 @@ export function normalizeYouTubeVideo(item, keyword = '') {
 
     metadata: {
       tags: item.tags ?? [],  // Ko có trường này trong dữ liệu trả về của Actor, nhưng giữ lại để tương thích với các provider khác.
-      handle: item.channel?.handle ?? '', 
+      handle: item.channel?.handle ?? '',
       subtitles: item.subtitles ?? null,  // Ko có trường này trong dữ liệu trả về của Actor, nhưng giữ lại để tương thích với các provider khác.
-      isShort: item.channel?.isShort ?? false,  
+      isShort: item.channel?.isShort ?? false,
       isLive: item.channel?.isLive ?? false,
     },
   };

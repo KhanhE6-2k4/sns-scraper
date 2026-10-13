@@ -18,6 +18,8 @@ import { ProviderRegistry } from "./services/discovery/provider-registry.js";
 import { DiscoveryService } from "./services/discovery/discovery-service.js";
 import { ResultStorageService } from './services/discovery/result-storage-service.js';
 
+import { JobSlotService } from './services/discovery/job-slot-service.js';
+
 import { DiscoveryController } from './controllers/discovery-controller.js';
 import { createDiscoveryRoutes } from './routes/discovery-routes.js';
 
@@ -79,6 +81,8 @@ const discoveryService = new DiscoveryService({
   providerRegistry,
 });
 
+const jobSlotService = new JobSlotService();
+
 const resultStorageService = new ResultStorageService({
   exportCreatorsCsv,
 });
@@ -101,6 +105,7 @@ const googleServiceAccountSheetService = new GoogleServiceAccountSheetService({
 const discoveryController = new DiscoveryController({
   discoveryService,
   resultStorageService,
+  jobSlotService,
 });
 
 const googleAuthController = new GoogleAuthController({

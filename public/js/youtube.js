@@ -10,6 +10,8 @@ const exportGoogleSheetBtn = document.getElementById('exportGoogleSheetBtn');
 const googleSheetStatus = document.getElementById('googleSheetStatus');
 let googleSheetValidated = false;
 let discoveryCompleted = false;
+let currentPlatform = null;
+let currentJobId = null;
 
 function updateExportButton() {
     if (exportGoogleSheetBtn) {
@@ -70,6 +72,8 @@ if (googleSheetUrlInput && validateGoogleSheetBtn && exportGoogleSheetBtn && goo
                 },
                 body: JSON.stringify({
                     spreadsheetUrl,
+                    platform: currentPlatform,
+                    jobId: currentJobId,
                 }),
             });
             const data = await response.json();
@@ -191,6 +195,8 @@ function escapeHtml(value) {
 // ============================================================
 runBtn.addEventListener('click', async () => {
     discoveryCompleted = false;
+    currentPlatform = null;
+    currentJobId = null;
     updateExportButton();
     // --------------------------------------------------------
     // KEYWORDS
@@ -211,14 +217,12 @@ runBtn.addEventListener('click', async () => {
     // --------------------------------------------------------
     // FOLLOWERS FILTER
     // --------------------------------------------------------
-
     // const isFilteredByFollowers = getCheckedValue('filterFollowers', 'no') === 'yes';
     // if (isFilteredByFollowers && !validateFollowers()) {
     //     return;
     // }
     // const minFollowersText = document.getElementById('minFollowers').value.trim();
     // const maxFollowersText = document.getElementById('maxFollowers').value.trim();
-
     // --------------------------------------------------------
     // SORT BY
     // --------------------------------------------------------
@@ -282,6 +286,11 @@ runBtn.addEventListener('click', async () => {
         if (!response.ok) {
             throw new Error(data.error || data.message || 'YouTube discovery thất bại.');
         }
+        if (!data.platform || !data.jobId) {
+            throw new Error('API không trả về platform hoặc jobId.');
+        }
+        currentPlatform = data.platform;
+        currentJobId = data.jobId;
         discoveryCompleted = true;
         updateExportButton();
         status.textContent = 'Hoàn thành!';

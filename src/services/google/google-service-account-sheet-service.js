@@ -225,12 +225,12 @@ export class GoogleServiceAccountSheetService {
     return rows;
   }
 
-  async writeResults(spreadsheetUrl) {
+  async writeResults(spreadsheetUrl, platform, jobId) {
     const spreadsheetId =
       this.extractSpreadsheetId(spreadsheetUrl);
 
     const csv =
-      await this.resultStorageService.getResultsCsv();
+      await this.resultStorageService.getResultsCsv(platform, jobId);
 
     if (typeof csv !== 'string' || !csv.trim()) {
       throw new Error('Không có dữ liệu CSV để export.');

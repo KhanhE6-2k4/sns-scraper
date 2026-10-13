@@ -74,6 +74,6 @@ export class TikTokProvider extends SocialPlatformProvider {
   }
 
   normalize(item, context = {}) {
-    return normalizeTikTokVideo(item, context.keyword ?? item.searchQuery ?? '');
+    return normalizeTikTokVideo(item, context.query ?? '');
   }
 }

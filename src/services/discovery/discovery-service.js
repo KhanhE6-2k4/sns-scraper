@@ -16,7 +16,7 @@ export class DiscoveryService {
     let contents = items.map(item => provider.normalize(
       item,
       {
-        keyword: item.searchQuery ?? ''
+        query: item.query ?? ''
       })
     );
 

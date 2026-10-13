@@ -191,8 +191,13 @@ export class TikTokClient {
 
     const { items } = await this.client.dataset(run.defaultDatasetId).listItems();
 
-    console.log(`Returned ${items.length} videos`);
-    return items;
+    const newItems = items.map(item => ({
+      ...item,
+      query: item.searchQuery ?? null,
+    }));
+
+    console.log(`Returned ${newItems.length} videos`);
+    return newItems;
   }
 
 //   async #runActor(input) {

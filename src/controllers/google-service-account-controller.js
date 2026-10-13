@@ -41,7 +41,7 @@ export class GoogleServiceAccountController {
 
   async exportResults(req, res) {
     try {
-      const { spreadsheetUrl } = req.body;
+      const { spreadsheetUrl, platform, jobId } = req.body;
 
       if (
         typeof spreadsheetUrl !== 'string' ||
@@ -56,7 +56,7 @@ export class GoogleServiceAccountController {
       // Dùng Service Account, không phụ thuộc phiên đăng nhập.
       const result =
         await this.googleServiceAccountSheetService
-          .writeResults(spreadsheetUrl.trim());
+          .writeResults(spreadsheetUrl.trim(), platform, jobId);
 
       return res.status(200).json({
         success: true,

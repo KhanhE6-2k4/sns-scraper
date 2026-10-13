@@ -34,6 +34,8 @@ const exportGoogleSheetBtn = document.getElementById('exportGoogleSheetBtn');
 const googleSheetStatus = document.getElementById('googleSheetStatus');
 let googleSheetValidated = false;
 let discoveryCompleted = false;
+let currentPlatform = null;
+let currentJobId = null;
 
 function updateExportButton() {
     exportGoogleSheetBtn.disabled = !googleSheetValidated || !discoveryCompleted;
@@ -96,7 +98,9 @@ exportGoogleSheetBtn.addEventListener('click', async () => {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    spreadsheetUrl
+                    spreadsheetUrl,
+                    platform: currentPlatform,
+                    jobId: currentJobId,
                 })
             });
         const result = await response.json();
@@ -237,6 +241,8 @@ function escapeHtml(value) {
 // ============================================================
 runBtn.addEventListener('click', async () => {
     discoveryCompleted = false;
+    currentPlatform = null;
+    currentJobId = null;
     updateExportButton();
     // --------------------------------------------------------
     // SEARCH TYPE
@@ -351,11 +357,18 @@ runBtn.addEventListener('click', async () => {
         if (!response.ok) {
             throw new Error(data.error || data.message || 'TikTok discovery thất bại.');
         }
+        if (!data.platform || !data.jobId) {
+            throw new Error('Discovery API không trả về platform hoặc jobId.');
+        }
+        currentPlatform = data.platform;
+        currentJobId = data.jobId;
         discoveryCompleted = true;
         updateExportButton();
         status.textContent = 'Hoàn thành!';
         const csvUrl = data.downloads?.csv;
         const jsonUrl = data.downloads?.json;
+        console.log('CSV URL:', csvUrl);
+        console.log('JSON URL:', jsonUrl);
         result.innerHTML = `
             <div class="summary">
                 Tìm thấy

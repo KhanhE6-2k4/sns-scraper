@@ -32,8 +32,27 @@
 
             <nav class="nav-links" id="main-nav">
                 <a href="#features">Features</a>
-                <a href="#platforms">Platforms</a>
-                <a href="/tiktok">TikTok Tool</a>
+                <!--<a href="#platforms">Platforms</a>-->
+                <div class="platform-dropdown">
+                    <button
+                        id="platformToggle"
+                        type="button"
+                        aria-expanded="false"
+                        aria-controls="platformMenu"
+                    >
+                        <span>Platforms</span>
+                        <span>▾</span>
+                    </button>
+
+                    <div id="platformMenu" class="dropdown-menu hidden">
+                        <a href="/tiktok">TikTok Tool</a>
+                        <a href="/instagram">Instagram Tool</a>
+                        <a href="/youtube">YouTube Tool</a>
+                    </div>
+                </div>
+                <!--<a href="/tiktok">TikTok Tool</a>
+                <a href="/instagram">Instagram Tool</a>
+                <a href="/youtube">YouTube Tool</a>-->
                 <a href="/privacy">Privacy</a>
                 <a href="/terms">Terms of Service</a>
                 <!--<a class="button button-small" href="/tiktok">
@@ -68,7 +87,8 @@
                 </div>
 
                 <p class="hero-note">
-                    Start with TikTok. More platforms are planned.
+                    <!--Start with TikTok. More platforms are planned.-->
+                    Start with TikTok.
                 </p>
             </div>
         </section>
@@ -120,10 +140,10 @@
                 <div class="section-heading">
                     <span class="eyebrow">SUPPORTED PLATFORMS</span>
                     <h2>One place for creator research</h2>
-                    <p>
+                    <!--<p>
                         Start with the available tool and explore
                         additional platforms as they become available.
-                    </p>
+                    </p>-->
                 </div>
 
                 <div class="platform-grid">
@@ -145,7 +165,8 @@
                     <article class="platform-card">
                         <div class="platform-top">
                             <span class="platform-symbol">I</span>
-                            <span class="status">Planned</span>
+                            <!--<span class="status">Planned</span>-->
+                            <span class="status status-live">Available</span>
                         </div>
                         <h3>Instagram</h3>
                         <p>
@@ -172,7 +193,8 @@
                     <article class="platform-card">
                         <div class="platform-top">
                             <span class="platform-symbol">▶</span>
-                            <span class="status">Planned</span>
+                            <!--<span class="status">Planned</span>-->
+                            <span class="status status-live">Available</span>
                         </div>
                         <h3>YouTube</h3>
                         <p>
@@ -192,7 +214,7 @@
                 <span class="eyebrow">GET STARTED</span>
                 <h2>Start your creator research</h2>
                 <p>
-                    Use the available TikTok discovery tool
+                    Use the TikTok discovery tool
                     to search and organize creator results.
                 </p>
                 <a class="button" href="/tiktok">

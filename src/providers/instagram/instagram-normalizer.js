@@ -1,8 +1,8 @@
-export function normalizeInstagramPost(item, keyword = '') {
+export function normalizeInstagramPost(item, query = '') {
   return {
     platform: 'instagram',
 
-    keyword,
+    query,
 
     title: item.caption ?? '',
 

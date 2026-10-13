@@ -86,6 +86,12 @@ export class YouTubeClient {
       .dataset(run.defaultDatasetId)
       .listItems();
 
-    return items;
+    const newItems = items.map(item => ({
+      ...item,
+      query: item?.sourceInput ?? '',
+    }));
+
+    console.log(`Returned ${newItems.length} videos`);
+    return newItems;
   }
 }

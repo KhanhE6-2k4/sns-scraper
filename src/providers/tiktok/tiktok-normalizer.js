@@ -1,11 +1,11 @@
 export function normalizeTikTokVideo(
   item,
-  keyword = ''
+  query = ''
 ) {
   return {
     platform: 'tiktok',
 
-    keyword,
+    query,
 
     title: item.text ?? '',
 

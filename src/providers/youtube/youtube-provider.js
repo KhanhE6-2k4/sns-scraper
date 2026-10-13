@@ -47,7 +47,7 @@ export class YouTubeProvider extends SocialPlatformProvider {
   normalize(item, context = {}) {
     return normalizeYouTubeVideo(
       item,
-      context.keyword ?? item.searchKeyword ?? ''
+      context.keyword ?? item.sourceInput ?? ''
     );
   }
 }

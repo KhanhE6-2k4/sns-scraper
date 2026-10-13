@@ -8,17 +8,43 @@
 
     <link rel="icon" type="image/png" href="assets/scraper-logo.png">
 
+    <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/tiktok.css">
+    <script src="/js/site.js"></script>
 </head>
 
 <body>
+
+<div class="platform-switcher">
+    <button
+        id="platformToggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="platformMenu"
+    >
+        <span>Platforms</span>
+        <span>▾</span>
+    </button>
+
+    <div id="platformMenu" class="dropdown-menu hidden">
+        <a href="/tiktok" data-platform="tiktok">TikTok Tool</a>
+        <a href="/instagram" data-platform="instagram">Instagram Tool</a>
+        <a href="/youtube" data-platform="youtube">YouTube Tool</a>
+    </div>
+</div>
 
 <a href="/" class="home-link"> ← Trang chủ </a>
 
 <div class="container">
 
-    <h1>Tiktok Scraper</h1>
-
+    <div class="page-title">
+        <img
+            src="/assets/tik-tok.png"
+            alt="Tiktok"
+            class="page-logo"
+        >
+        <h1>Tiktok Scraper</h1>
+    </div>
     <!-- Nút kết nối google -->
     <!-- <button
         id="connectGoogleBtn"

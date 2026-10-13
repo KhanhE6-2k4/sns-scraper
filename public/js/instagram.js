@@ -10,6 +10,8 @@ const exportGoogleSheetBtn = document.getElementById('exportGoogleSheetBtn');
 const googleSheetStatus = document.getElementById('googleSheetStatus');
 let googleSheetValidated = false;
 let discoveryCompleted = false;
+let currentPlatform = null;
+let currentJobId = null;
 
 function updateExportButton() {
     if (exportGoogleSheetBtn) {
@@ -70,6 +72,8 @@ if (googleSheetUrlInput && validateGoogleSheetBtn && exportGoogleSheetBtn && goo
                 },
                 body: JSON.stringify({
                     spreadsheetUrl,
+                    platform: currentPlatform,
+                    jobId: currentJobId,
                 }),
             });
             const data = await response.json();
@@ -191,6 +195,8 @@ function escapeHtml(value) {
 // ============================================================
 runBtn.addEventListener('click', async () => {
     discoveryCompleted = false;
+    currentPlatform = null;
+    currentJobId = null;
     updateExportButton();
     // --------------------------------------------------------
     // SEARCH TYPE
@@ -276,6 +282,11 @@ runBtn.addEventListener('click', async () => {
         if (!response.ok) {
             throw new Error(data.error || data.message || 'Instagram discovery thất bại.');
         }
+        if (!data.platform || !data.jobId) {
+            throw new Error('Discovery API không trả về platform hoặc jobId.');
+        }
+        currentPlatform = data.platform;
+        currentJobId = data.jobId;
         discoveryCompleted = true;
         updateExportButton();
         status.textContent = 'Hoàn thành!';

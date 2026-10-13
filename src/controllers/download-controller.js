@@ -7,6 +7,8 @@ export class DownloadController {
     try {
       const { filePath, fileName } =
         await this.downloadService.getDownloadInfo(
+          req.params.platform,
+          req.params.jobId,
           req.params.file
         );
 

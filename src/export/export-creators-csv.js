@@ -86,7 +86,7 @@ export async function exportCreatorsCsv(videos, outputPath) {
               totalLikes: creator.totalLikes ?? 0,
               videoCount: creator.videoCount ?? 0,
               videosFound: 0,
-              keywords: new Set(),
+              queries: new Set(),
               bio: creator.bio || '',
           });
         }
@@ -95,8 +95,8 @@ export async function exportCreatorsCsv(videos, outputPath) {
 
         current.videosFound += 1;
 
-        if (video.keyword) {
-            current.keywords.add(video.keyword);
+        if (video.query) {
+            current.queries.add(video.query);
         }
     }
 
@@ -109,7 +109,7 @@ export async function exportCreatorsCsv(videos, outputPath) {
         'Total Likes',
         'Video Count',
         'Videos Found',
-        'Keywords Matched',
+        'Queries Matched',
         'Bio',
     ];
 
@@ -127,7 +127,7 @@ export async function exportCreatorsCsv(videos, outputPath) {
             creator.totalLikes,
             creator.videoCount,
             creator.videosFound,
-            [...creator.keywords].join('; '),
+            [...creator.queries].join('; '),
             creator.bio,
         ]);
     }
