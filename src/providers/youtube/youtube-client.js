@@ -64,8 +64,9 @@ export class YouTubeClient {
     //   dateFilter,
     // };
 
+    const total_queries = searchKeywords.length;
     const input = {
-      maxResults: limit,
+      maxResults: Math.floor(limit / total_queries),
       sortBy,
       uploadDate: dateFilter,
       country: 'vn',
