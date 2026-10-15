@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { getCreatorProfileUrl } from '../config/platforms.js';
 
 // function escapeCsv(value) {
 //     if (value === null || value === undefined) {
@@ -18,24 +19,6 @@ import path from 'path';
 
 //     return stringValue;
 // }
-
-function getCreatorProfileUrl(platform, username) {
-  if (!username) return '';
-
-  switch (platform) {
-    case 'instagram':
-      return `https://www.instagram.com/${username}/`;
-
-    case 'tiktok':
-      return `https://www.tiktok.com/@${username}`;
-
-    case 'youtube':
-      return `https://www.youtube.com/@${username}`;
-
-    default:
-      return '';
-  }
-}
 
 function escapeCsv(value) {
   if (value === null || value === undefined) {

@@ -1,4 +1,5 @@
 import pg from 'pg';
+import { SUPPORTED_PLATFORMS } from '../config/platforms.js';
 
 const {
     Pool
@@ -20,11 +21,17 @@ export async function query(
     );
 }
 
+// SUPPORTED_PLATFORMS là hằng số nội bộ nên có thể ghép trực tiếp vào câu lệnh CHECK.
+const platformCheckList = SUPPORTED_PLATFORMS
+    .map(platform => `'${platform}'`)
+    .join(', ');
+
 export async function initializeDatabase() {
     await query(`
       CREATE TABLE IF NOT EXISTS discovery_job_slots (
           platform TEXT NOT NULL
-              CHECK (platform IN ('tiktok', 'instagram', 'youtube')),
+              CONSTRAINT discovery_job_slots_platform_check
+              CHECK (platform IN (${platformCheckList})),
 
           slot_number SMALLINT NOT NULL
               CHECK (slot_number IN (1, 2)),
@@ -55,6 +62,17 @@ export async function initializeDatabase() {
       );
   `);
 
+    // CREATE TABLE IF NOT EXISTS không cập nhật bảng đã có,
+    // nên đồng bộ lại CHECK mỗi lần khởi động để nhận nền tảng mới.
+    await query(`
+      ALTER TABLE discovery_job_slots
+          DROP CONSTRAINT IF EXISTS discovery_job_slots_platform_check;
+
+      ALTER TABLE discovery_job_slots
+          ADD CONSTRAINT discovery_job_slots_platform_check
+          CHECK (platform IN (${platformCheckList}));
+  `);
+
     await query(`
       INSERT INTO discovery_job_slots (
           platform,
@@ -67,14 +85,12 @@ export async function initializeDatabase() {
           slots.slot_number,
           gen_random_uuid(),
           'IDLE'
-      FROM (
-          VALUES ('tiktok'), ('instagram'), ('youtube')
-      ) AS platforms(platform)
+      FROM unnest($1::text[]) AS platforms(platform)
       CROSS JOIN (
           VALUES (1), (2)
       ) AS slots(slot_number)
       ON CONFLICT (platform, slot_number) DO NOTHING;
-  `);
+  `, [SUPPORTED_PLATFORMS]);
 
 
     await query(`

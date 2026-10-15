@@ -1,7 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-
-const ALLOWED_PLATFORMS = ['tiktok', 'instagram', 'youtube'];
+import { isSupportedPlatform } from '../../config/platforms.js';
 
 export class ResultStorageService {
   constructor({ exportCreatorsCsv }) {
@@ -9,7 +8,7 @@ export class ResultStorageService {
   }
 
   getResultsDirectory(platform, jobId) {
-    if (!ALLOWED_PLATFORMS.includes(platform)) {
+    if (!isSupportedPlatform(platform)) {
       throw new Error(
         `Unsupported platform: ${JSON.stringify(platform)}`
       );

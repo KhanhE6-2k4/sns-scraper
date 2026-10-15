@@ -14,6 +14,9 @@ import { InstagramProvider } from "./providers/instagram/instagram-provider.js";
 import { YouTubeClient } from './providers/youtube/youtube-client.js';
 import { YouTubeProvider } from './providers/youtube/youtube-provider.js';
 
+import { ThreadsClient } from './providers/threads/threads-client.js';
+import { ThreadsProvider } from './providers/threads/threads-provider.js';
+
 import { ProviderRegistry } from "./services/discovery/provider-registry.js";
 import { DiscoveryService } from "./services/discovery/discovery-service.js";
 import { ResultStorageService } from './services/discovery/result-storage-service.js';
@@ -71,10 +74,20 @@ const youtubeProvider = new YouTubeProvider({
   client: youtubeClient,
 });
 
+// Threads
+const threadsClient = new ThreadsClient({
+  apiToken: process.env.APIFY_API_TOKEN,
+});
+
+const threadsProvider = new ThreadsProvider({
+  client: threadsClient,
+});
+
 const providerRegistry = new ProviderRegistry([
   tikTokProvider,
   instagramProvider,
   youtubeProvider,
+  threadsProvider,
 ]);
 
 const discoveryService = new DiscoveryService({
@@ -153,6 +166,11 @@ app.get('/instagram', (req, res) => {
 // Youtube
 app.get('/youtube', (req, res) => {
   res.sendFile('youtube.html', { root: 'public' });
+})
+
+// Threads
+app.get('/threads', (req, res) => {
+  res.sendFile('threads.html', { root: 'public' });
 })
 
 
