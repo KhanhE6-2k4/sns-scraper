@@ -4,7 +4,7 @@ export function createDownloadRoutes({ downloadController }) {
   const route = express.Router();
 
   route.get(
-    '/download/:file',
+    '/download/:platform/:jobId/:file',
     downloadController.download
   );
 

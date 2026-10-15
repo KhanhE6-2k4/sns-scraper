@@ -11,19 +11,17 @@ export class TikTokProvider extends SocialPlatformProvider {
     return 'tiktok';
   }
 
-  async discover(criteria) {
+  async discover(request) {
     const {
       queries,
       searchType,
-      dateFrom,
-      dateTo,
+      dateRange,
       limit = 10,
       sortBy = 'relevance'
-    } = criteria;
+    } = request;
 
     const searchOptions = {
-      dateFrom,
-      dateTo,
+      dateRange,
       limit,
       sortBy
     };
@@ -31,44 +29,43 @@ export class TikTokProvider extends SocialPlatformProvider {
     if (searchType === 'hashtag') {
       return this.client.scrapeHashtags({
         hashtags: queries,
-        dateFrom,
-        dateTo,
-        limit,
-        sortBy
+        ...searchOptions,
       });
     }
 
     if (searchType === 'keyword') {
       return this.client.scrapeKeywords({
         queries,
-        dateFrom,
-        dateTo,
-        limit,
-        sortBy
+        ...searchOptions,
       });
     }
 
     if (searchType === 'all') {
-      const keywordLimit = Math.ceil(limit / 2);
-      const hashtagLimit = Math.ceil(limit / 2);
+      const keywordLimit = Math.floor(limit / 2);
+      const hashtagLimit = limit - keywordLimit;
 
       const [keywordResults, hashtagResults] = await Promise.all([
-        this.client.scrapeKeywords({
-          queries,
-          ...searchOptions,
-          limit: keywordLimit
-        }),
-        this.client.scrapeHashtags({
-          hashtags: queries,
-          ...searchOptions,
-          limit: hashtagLimit
-        })
+        keywordLimit > 0
+          ? this.client.scrapeKeywords({
+              queries,
+              ...searchOptions,
+              limit: keywordLimit,
+            })
+          : Promise.resolve([]),
+
+        hashtagLimit > 0
+          ? this.client.scrapeHashtags({
+              hashtags: queries,
+              ...searchOptions,
+              limit: hashtagLimit,
+            })
+          : Promise.resolve([]),
       ]);
 
       return [
         ...keywordResults,
-        ...hashtagResults
-      ];
+        ...hashtagResults,
+      ].slice(0, limit);
     }
 
     throw new Error(
@@ -77,6 +74,6 @@ export class TikTokProvider extends SocialPlatformProvider {
   }
 
   normalize(item, context = {}) {
-    return normalizeTikTokVideo(item, context.keyword ?? item.searchQuery ?? '');
+    return normalizeTikTokVideo(item, context.query ?? '');
   }
 }

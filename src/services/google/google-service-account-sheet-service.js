@@ -83,28 +83,88 @@ export class GoogleServiceAccountSheetService {
     }
   }
 
+  // createSheetTitle() {
+  //   const now = new Date();
+
+  //   const formatter = new Intl.DateTimeFormat('en-CA', {
+  //     timeZone: 'Asia/Ho_Chi_Minh',
+  //     year: 'numeric',
+  //     month: '2-digit',
+  //     day: '2-digit',
+  //     hour: '2-digit',
+  //     minute: '2-digit',
+  //     second: '2-digit',
+  //     hourCycle: 'h23',
+  //   });
+
+  //   const parts = formatter.formatToParts(now);
+
+  //   const values = Object.fromEntries(
+  //     parts.map(part => [part.type, part.value])
+  //   );
+
+  //   return `${values.year}-${values.month}-${values.day}_${values.hour}-${values.minute}-${values.second}`;
+  // }
+
+ // Tạo tiêu đề tab theo ngày hiện tại (YYYY-MM-DD) để nhóm kết quả theo ngày.
   createSheetTitle() {
     const now = new Date();
 
-    const formatter = new Intl.DateTimeFormat('en-CA', {
+    const parts = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Asia/Ho_Chi_Minh',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hourCycle: 'h23',
-    });
-
-    const parts = formatter.formatToParts(now);
+    }).formatToParts(now);
 
     const values = Object.fromEntries(
       parts.map(part => [part.type, part.value])
     );
 
-    return `${values.year}-${values.month}-${values.day}_${values.hour}-${values.minute}-${values.second}`;
+    return `${values.year}-${values.month}-${values.day}`;
   }
+
+  // tìm hoặc tạo tab theo ngày
+  async getOrCreateDailySheet(spreadsheetId, sheets, sheetTitle) {
+    const response = await sheets.spreadsheets.get({
+      spreadsheetId,
+      fields: 'sheets.properties(sheetId,title)',
+    });
+
+    const existingSheet = response.data.sheets?.find(
+      sheet => sheet.properties?.title === sheetTitle
+    );
+
+    if (existingSheet) {
+      return existingSheet.properties.sheetId;
+    }
+
+    const createResponse = await sheets.spreadsheets.batchUpdate({
+      spreadsheetId,
+      requestBody: {
+        requests: [
+          {
+            addSheet: {
+              properties: {
+                title: sheetTitle,
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    const sheetId =
+      createResponse.data.replies?.[0]?.addSheet?.properties?.sheetId;
+
+    if (sheetId === undefined) {
+      throw new Error('Không thể tạo tab mới trong Google Sheet.');
+    }
+
+    return sheetId;
+  }
+
+
 
   parseCsv(csv) {
     const rows = [];
@@ -165,13 +225,12 @@ export class GoogleServiceAccountSheetService {
     return rows;
   }
 
-  async writeResults(spreadsheetUrl) {
+  async writeResults(spreadsheetUrl, platform, jobId) {
     const spreadsheetId =
       this.extractSpreadsheetId(spreadsheetUrl);
 
-    // Đọc CSV từ thư mục kết quả dùng chung, không cần userId.
     const csv =
-      await this.resultStorageService.getResultsCsv();
+      await this.resultStorageService.getResultsCsv(platform, jobId);
 
     if (typeof csv !== 'string' || !csv.trim()) {
       throw new Error('Không có dữ liệu CSV để export.');
@@ -179,68 +238,144 @@ export class GoogleServiceAccountSheetService {
 
     const rows = this.parseCsv(csv);
 
-    if (rows.length === 0) {
+    if (rows.length <= 1) {
       throw new Error('Không có dữ liệu để export.');
     }
 
     const sheets = this.createSheetsClient();
     const sheetTitle = this.createSheetTitle();
 
-    let sheetId;
-
     try {
-      const createResponse =
-        await sheets.spreadsheets.batchUpdate({
-          spreadsheetId,
-          requestBody: {
-            requests: [
-              {
-                addSheet: {
-                  properties: {
-                    title: sheetTitle,
-                  },
-                },
-              },
-            ],
-          },
-        });
+      const sheetId = await this.getOrCreateDailySheet(
+        spreadsheetId,
+        sheets,
+        sheetTitle
+      );
 
-      sheetId =
-        createResponse.data.replies?.[0]?.addSheet
-          ?.properties?.sheetId;
+      // Tab đã tồn tại thì không ghi lại header.
+      const existingData = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: `'${sheetTitle}'!A1:A1`,
+      });
 
-      if (sheetId === undefined) {
-        throw new Error(
-          'Không thể tạo tab mới trong Google Sheet.'
-        );
+      const hasHeader =
+        existingData.data.values?.length > 0;
+
+      const rowsToAppend = hasHeader
+        ? rows.slice(1)
+        : rows;
+
+      if (rowsToAppend.length === 0) {
+        throw new Error('Không có dữ liệu mới để export.');
       }
 
-      await sheets.spreadsheets.values.update({
+      const response = await sheets.spreadsheets.values.append({
         spreadsheetId,
         range: `'${sheetTitle}'!A1`,
         valueInputOption: 'RAW',
+        insertDataOption: 'INSERT_ROWS',
         requestBody: {
-          values: rows,
+          values: rowsToAppend,
         },
       });
+
+      const updatedRows =
+        response.data.updates?.updatedRows ?? 0;
+
+      return {
+        spreadsheetId,
+        sheetId,
+        sheetTitle,
+        rowCount: updatedRows,
+        creatorCount: Math.max(0, updatedRows),
+      };
     } catch (error) {
       if (
-        error.message ===
-        'Không thể tạo tab mới trong Google Sheet.'
+        error.message === 'Không có dữ liệu mới để export.'
       ) {
         throw error;
       }
 
       this.handleGoogleError(error);
     }
-
-    // Giữ nguyên cấu trúc kết quả như service cũ.
-    return {
-      spreadsheetId,
-      sheetId,
-      sheetTitle,
-      rowCount: rows.length,
-      creatorCount: Math.max(0, rows.length - 1),
-    };
   }
+
+  // async writeResults(spreadsheetUrl) {
+  //   const spreadsheetId =
+  //     this.extractSpreadsheetId(spreadsheetUrl);
+
+  //   // Đọc CSV từ thư mục kết quả dùng chung, không cần userId.
+  //   const csv =
+  //     await this.resultStorageService.getResultsCsv();
+
+  //   if (typeof csv !== 'string' || !csv.trim()) {
+  //     throw new Error('Không có dữ liệu CSV để export.');
+  //   }
+
+  //   const rows = this.parseCsv(csv);
+
+  //   if (rows.length === 0) {
+  //     throw new Error('Không có dữ liệu để export.');
+  //   }
+
+  //   const sheets = this.createSheetsClient();
+  //   const sheetTitle = this.createSheetTitle();
+
+  //   let sheetId;
+
+  //   try {
+  //     const createResponse =
+  //       await sheets.spreadsheets.batchUpdate({
+  //         spreadsheetId,
+  //         requestBody: {
+  //           requests: [
+  //             {
+  //               addSheet: {
+  //                 properties: {
+  //                   title: sheetTitle,
+  //                 },
+  //               },
+  //             },
+  //           ],
+  //         },
+  //       });
+
+  //     sheetId =
+  //       createResponse.data.replies?.[0]?.addSheet
+  //         ?.properties?.sheetId;
+
+  //     if (sheetId === undefined) {
+  //       throw new Error(
+  //         'Không thể tạo tab mới trong Google Sheet.'
+  //       );
+  //     }
+
+  //     await sheets.spreadsheets.values.update({
+  //       spreadsheetId,
+  //       range: `'${sheetTitle}'!A1`,
+  //       valueInputOption: 'RAW',
+  //       requestBody: {
+  //         values: rows,
+  //       },
+  //     });
+  //   } catch (error) {
+  //     if (
+  //       error.message ===
+  //       'Không thể tạo tab mới trong Google Sheet.'
+  //     ) {
+  //       throw error;
+  //     }
+
+  //     this.handleGoogleError(error);
+  //   }
+
+  //   // Giữ nguyên cấu trúc kết quả như service cũ.
+  //   return {
+  //     spreadsheetId,
+  //     sheetId,
+  //     sheetTitle,
+  //     rowCount: rows.length,
+  //     creatorCount: Math.max(0, rows.length - 1),
+  //   };
+  // }
 }

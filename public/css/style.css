@@ -201,7 +201,7 @@ a:focus-visible {
 .eyebrow {
     display: inline-block;
     color: var(--color-primary);
-    font-size: 11px;
+    font-size: 18px;
     font-weight: 800;
     letter-spacing: 1.8px;
     line-height: 1.5;
@@ -311,7 +311,7 @@ a:focus-visible {
 
 .platform-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
 }
 
@@ -569,5 +569,114 @@ a:focus-visible {
     .footer-content {
         align-items: flex-start;
         flex-direction: column;
+    }
+}
+
+.page-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.page-title h1 {
+    margin: 0;
+}
+
+.page-logo {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+/* Vị trí dropdown trên trang index */
+.platform-dropdown {
+    position: relative;
+}
+
+/* Vị trí dropdown trên các trang công cụ */
+.platform-switcher {
+    position: fixed;
+    top: 20px;
+    right: 24px;
+    z-index: 1000;
+}
+
+/* Nút Platforms dùng chung */
+#platformToggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--color-border, #e5e8f0);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--color-muted, #687086);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#platformToggle:hover {
+    color: var(--color-primary, #6258e8);
+}
+
+/* Menu dùng chung */
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    min-width: 170px;
+    display: flex;
+    flex-direction: column;
+    padding: 6px;
+    border: 1px solid var(--color-border, #e5e8f0);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(24, 32, 51, 0.12);
+    z-index: 1000;
+}
+
+/* Menu index mở ngay dưới Platforms, căn trái */
+.platform-dropdown .dropdown-menu {
+    left: 0;
+    right: auto;
+}
+
+/* Menu trang công cụ mở bên dưới nút ở góc phải */
+.platform-switcher .dropdown-menu {
+    right: 0;
+    left: auto;
+}
+
+.dropdown-menu a {
+    padding: 10px 12px;
+    border-radius: 6px;
+    color: var(--color-muted, #687086);
+    font-size: 14px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.dropdown-menu a:hover,
+.dropdown-menu a.active {
+    color: var(--color-primary, #6258e8);
+    background: var(--color-accent, #e9e7ff);
+}
+
+.dropdown-menu a.active {
+    font-weight: 600;
+}
+
+.dropdown-menu.hidden {
+    display: none;
+}
+
+@media (max-width: 640px) {
+    .platform-switcher {
+        top: 12px;
+        right: 12px;
     }
 }

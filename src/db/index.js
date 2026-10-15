@@ -1,12 +1,13 @@
 import pg from 'pg';
 
-const { Pool } = pg;
+const {
+    Pool
+} = pg;
 
 // console.log('DATABASE_URL:', process.env.DATABASE_URL);
 
 export const pool = new Pool({
-    connectionString:
-        process.env.DATABASE_URL,
+    connectionString: process.env.DATABASE_URL,
 });
 
 export async function query(
@@ -20,6 +21,61 @@ export async function query(
 }
 
 export async function initializeDatabase() {
+    await query(`
+      CREATE TABLE IF NOT EXISTS discovery_job_slots (
+          platform TEXT NOT NULL
+              CHECK (platform IN ('tiktok', 'instagram', 'youtube')),
+
+          slot_number SMALLINT NOT NULL
+              CHECK (slot_number IN (1, 2)),
+
+          job_id UUID NOT NULL UNIQUE,
+
+          status TEXT NOT NULL DEFAULT 'IDLE'
+              CHECK (
+                  status IN (
+                      'IDLE',
+                      'RUNNING',
+                      'COMPLETED',
+                      'FAILED'
+                  )
+              ),
+
+          request_data JSONB,
+
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          started_at TIMESTAMPTZ,
+          finished_at TIMESTAMPTZ,
+
+          result_count INTEGER,
+          creator_count INTEGER,
+          error_message TEXT,
+
+          PRIMARY KEY (platform, slot_number)
+      );
+  `);
+
+    await query(`
+      INSERT INTO discovery_job_slots (
+          platform,
+          slot_number,
+          job_id,
+          status
+      )
+      SELECT
+          platforms.platform,
+          slots.slot_number,
+          gen_random_uuid(),
+          'IDLE'
+      FROM (
+          VALUES ('tiktok'), ('instagram'), ('youtube')
+      ) AS platforms(platform)
+      CROSS JOIN (
+          VALUES (1), (2)
+      ) AS slots(slot_number)
+      ON CONFLICT (platform, slot_number) DO NOTHING;
+  `);
+
 
     await query(`
         CREATE TABLE IF NOT EXISTS users (
@@ -74,6 +130,17 @@ export async function initializeDatabase() {
             UNIQUE(google_user_id)
         );
     `);
+
+    const result = await query(`
+      SELECT
+        current_database() AS database,
+        current_schema() AS schema,
+        to_regclass('discovery_job_slots') AS table_name,
+        COUNT(*) AS slot_count
+      FROM discovery_job_slots
+    `);
+
+    console.log('Slot table verification:', result.rows[0]);
 
     console.log(
         'Database initialized successfully.'

@@ -8,9 +8,17 @@ import { exportCreatorsCsv } from './export/export-creators-csv.js';
 import { TikTokClient } from "./providers/tiktok/tiktok-client.js";
 import { TikTokProvider } from "./providers/tiktok/tiktok-provider.js";
 
+import { InstagramClient } from "./providers/instagram/instagram-client.js";
+import { InstagramProvider } from "./providers/instagram/instagram-provider.js";
+
+import { YouTubeClient } from './providers/youtube/youtube-client.js';
+import { YouTubeProvider } from './providers/youtube/youtube-provider.js';
+
 import { ProviderRegistry } from "./services/discovery/provider-registry.js";
 import { DiscoveryService } from "./services/discovery/discovery-service.js";
 import { ResultStorageService } from './services/discovery/result-storage-service.js';
+
+import { JobSlotService } from './services/discovery/job-slot-service.js';
 
 import { DiscoveryController } from './controllers/discovery-controller.js';
 import { createDiscoveryRoutes } from './routes/discovery-routes.js';
@@ -37,6 +45,7 @@ import { createGoogleServiceAccountRoutes } from './routes/google-service-accoun
 const app = express();
 
 // Dependency Injection (Infrastructure)
+// Tiktok
 const tikTokClient = new TikTokClient({
   apiToken: process.env.APIFY_API_TOKEN,
 });
@@ -44,14 +53,35 @@ const tikTokClient = new TikTokClient({
 const tikTokProvider = new TikTokProvider({
   client: tikTokClient,
 });
+// Instagram
+const instagramClient = new InstagramClient({
+  apiToken: process.env.APIFY_API_TOKEN,
+});
+
+const instagramProvider = new InstagramProvider({
+  client: instagramClient,
+});
+
+// Youtube
+const youtubeClient = new YouTubeClient({
+  apiToken: process.env.APIFY_API_TOKEN,
+});
+
+const youtubeProvider = new YouTubeProvider({
+  client: youtubeClient,
+});
 
 const providerRegistry = new ProviderRegistry([
   tikTokProvider,
+  instagramProvider,
+  youtubeProvider,
 ]);
 
 const discoveryService = new DiscoveryService({
   providerRegistry,
 });
+
+const jobSlotService = new JobSlotService();
 
 const resultStorageService = new ResultStorageService({
   exportCreatorsCsv,
@@ -75,6 +105,7 @@ const googleServiceAccountSheetService = new GoogleServiceAccountSheetService({
 const discoveryController = new DiscoveryController({
   discoveryService,
   resultStorageService,
+  jobSlotService,
 });
 
 const googleAuthController = new GoogleAuthController({
@@ -104,10 +135,26 @@ app.get('/', (req, res) => {
   res.sendFile('index.html', { root: 'public' });
 });
 
+// Check trạng thái app
+app.get('/health', (req, res) => {
+  res.status(200).type('text/plain').send('OK');
+});
+
 // TikTok
 app.get('/tiktok', (req, res) => {
   res.sendFile('tiktok.html', { root: 'public' });
 })
+
+// Instagram
+app.get('/instagram', (req, res) => {
+  res.sendFile('instagram.html', { root: 'public' });
+})
+
+// Youtube
+app.get('/youtube', (req, res) => {
+  res.sendFile('youtube.html', { root: 'public' });
+})
+
 
 // Privacy Policy
 app.get('/privacy', (req, res) => {
@@ -183,4 +230,3 @@ app.use(
     googleServiceAccountController,
   })
 );
-

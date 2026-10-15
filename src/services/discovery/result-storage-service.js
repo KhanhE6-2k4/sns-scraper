@@ -1,42 +1,52 @@
 import fs from 'fs/promises';
 import path from 'path';
 
+const ALLOWED_PLATFORMS = ['tiktok', 'instagram', 'youtube'];
+
 export class ResultStorageService {
   constructor({ exportCreatorsCsv }) {
     this.exportCreatorsCsv = exportCreatorsCsv;
   }
 
-  getResultsDirectory() {
+  getResultsDirectory(platform, jobId) {
+    if (!ALLOWED_PLATFORMS.includes(platform)) {
+      throw new Error(
+        `Unsupported platform: ${JSON.stringify(platform)}`
+      );
+    }
+
     return path.join(
       process.cwd(),
       'data',
-      'results'
+      'results',
+      platform,
+      jobId,
     );
   }
 
-  getResultsJsonPath() {
+  getResultsJsonPath(platform, jobId) {
     return path.join(
-      this.getResultsDirectory(),
+      this.getResultsDirectory(platform, jobId),
       'results.json'
     );
   }
 
-  getResultsCsvPath() {
+  getResultsCsvPath(platform, jobId) {
     return path.join(
-      this.getResultsDirectory(),
+      this.getResultsDirectory(platform, jobId),
       'results.csv'
     );
   }
 
-  async saveResults(videos) {
-    const resultsDirectory = this.getResultsDirectory();
+  async saveResults(platform, jobId, videos) {
+    const resultsDirectory = this.getResultsDirectory(platform, jobId);
 
     await fs.mkdir(resultsDirectory, {
       recursive: true,
     });
 
-    const jsonPath = this.getResultsJsonPath();
-    const csvPath = this.getResultsCsvPath();
+    const jsonPath = this.getResultsJsonPath(platform, jobId);
+    const csvPath = this.getResultsCsvPath(platform, jobId);
 
     await fs.writeFile(
       jsonPath,
@@ -56,16 +66,16 @@ export class ResultStorageService {
     };
   }
 
-  async getResultsJson() {
+  async getResultsJson(platform, jobId) {
     try {
       return await fs.readFile(
-        this.getResultsJsonPath(),
+        this.getResultsJsonPath(platform, jobId),
         'utf8'
       );
     } catch (error) {
       if (error.code === 'ENOENT') {
         throw new Error(
-          'Chưa có kết quả tìm kiếm để tải.'
+          `Chưa có kết quả tìm kiếm cho ${platform}.`
         );
       }
 
@@ -73,10 +83,10 @@ export class ResultStorageService {
     }
   }
 
-  async getResultsCsv() {
+  async getResultsCsv(platform, jobId) {
     try {
       return await fs.readFile(
-        this.getResultsCsvPath(),
+        this.getResultsCsvPath(platform, jobId),
         'utf8'
       );
     } catch (error) {
