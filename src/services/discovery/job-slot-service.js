@@ -1,10 +1,9 @@
 import { query, pool } from '../../db/index.js';
-
-const PLATFORMS = ['tiktok', 'instagram', 'youtube'];
+import { isSupportedPlatform } from '../../config/platforms.js';
 
 export class JobSlotService {
   async acquireSlot(platform, requestData) {
-    if (!PLATFORMS.includes(platform)) {
+    if (!isSupportedPlatform(platform)) {
       throw new Error(`Unsupported platform: ${platform}`);
     }
 

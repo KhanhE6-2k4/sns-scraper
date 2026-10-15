@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threads Scraper</title>
+    <link rel="icon" type="image/png" href="assets/scraper-logo.png">
+
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/threads.css">
+    <script src="/js/site.js"></script>
+</head>
+
+<body>
+
+<div class="platform-switcher">
+    <button
+        id="platformToggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="platformMenu"
+    >
+        <span>Platforms</span>
+        <span>▾</span>
+    </button>
+
+    <div id="platformMenu" class="dropdown-menu hidden">
+        <a href="/tiktok" data-platform="tiktok">TikTok Tool</a>
+        <a href="/instagram" data-platform="instagram">Instagram Tool</a>
+        <a href="/youtube" data-platform="youtube">YouTube Tool</a>
+        <a href="/threads" data-platform="threads">Threads Tool</a>
+    </div>
+</div>
+
+<a href="/" class="home-link">← Trang chủ</a>
+
+<div class="container">
+    <div class="page-title">
+        <img
+            src="/assets/threads.png"
+            alt="Threads"
+            class="page-logo"
+        >
+        <h1>Threads Scraper</h1>
+    </div>
+
+    <div class="google-sheet-section">
+        <label for="googleSheetUrl">Google Sheet</label>
+        <input
+            id="googleSheetUrl"
+            type="text"
+            placeholder="Dán URL Google Sheet..."
+            autocomplete="off"
+        >
+
+        <div class="google-sheet-actions">
+            <button id="validateGoogleSheetBtn" type="button">Kiểm tra</button>
+            <button id="exportGoogleSheetBtn" type="button" disabled>
+                Nhập vào Google Sheet
+            </button>
+        </div>
+
+        <div id="googleSheetStatus" class="google-sheet-status"></div>
+    </div>
+
+    <label>Kiểu tìm kiếm</label>
+    <div class="search-type">
+        <label class="search-type-option">
+            <input
+                type="radio"
+                name="searchType"
+                value="all"
+                checked
+            >
+            <span>Tất cả</span>
+        </label>
+        <label class="search-type-option">
+            <input
+                type="radio"
+                name="searchType"
+                value="keyword"
+            >
+            <span>Từ khóa</span>
+        </label>
+        <label class="search-type-option">
+            <input type="radio"
+                name="searchType"
+                value="hashtag"
+            >
+            <span>Hashtag</span>
+        </label>
+    </div>
+
+    <label for="keywords">Nội dung tìm kiếm</label>
+    <textarea
+        id="keywords"
+        placeholder="Nhập mỗi cụm từ truy vấn trên một dòng"
+        spellcheck="false"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+    ></textarea>
+
+    <!-- Threads Actor không trả về followers nên không có bộ lọc Followers -->
+    <div class="filter-section">
+        <label>Verified (có tích xanh)</label>
+        <div class="filter-body">
+            <div class="radio-group">
+                <label>
+                    <input type="radio" name="filterVerified" value="any" checked>
+                    Không dùng
+                </label>
+                <label>
+                    <input type="radio" name="filterVerified" value="verified">
+                    Có
+                </label>
+                <label>
+                    <input type="radio" name="filterVerified" value="not_verified">
+                    Không
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <label for="limit">Số lượng bài đăng tối đa</label>
+    <input id="limit" type="number" value="10" min="1" max="500">
+
+    <div class="filter-section">
+        <label>Thời gian</label>
+        <div class="filter-body">
+            <div class="radio-group">
+                <label>
+                    <span>Tất cả</span>
+                    <input type="radio" name="dateMode" value="all" checked>
+                </label>
+                <label>
+                    <span>Tùy chọn</span>
+                    <input type="radio" name="dateMode" value="custom">
+                </label>
+            </div>
+
+            <div id="dateOptions" class="date-options disabled">
+                <div class="date-range-options">
+                    <label>
+                        <input type="radio" name="dateRange" value="1d" checked disabled>
+                        1 ngày
+                    </label>
+                    <label>
+                        <input type="radio" name="dateRange" value="1w" disabled>
+                        1 tuần
+                    </label>
+                    <label>
+                        <input type="radio" name="dateRange" value="1m" disabled>
+                        1 tháng
+                    </label>
+                    <label>
+                        <input type="radio" name="dateRange" value="3m" disabled>
+                        3 tháng
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <label>Thứ tự kết quả</label>
+    <div class="filter-body">
+        <div class="radio-group">
+            <label>
+                <input type="radio" name="sort" value="relevance" checked>
+                Phổ biến (Top)
+            </label>
+            <label>
+                <input type="radio" name="sort" value="latest">
+                Mới nhất (Recent)
+            </label>
+        </div>
+    </div>
+
+    <div class="btn-wrapper">
+        <button id="runBtn" type="button">Start</button>
+    </div>
+
+    <div id="status"></div>
+    <div id="result"></div>
+</div>
+
+<script src="/js/threads.js"></script>
+</body>
+</html>
