@@ -135,6 +135,11 @@ app.get('/', (req, res) => {
   res.sendFile('index.html', { root: 'public' });
 });
 
+// Check trạng thái app
+app.get('/health', (req, res) => {
+  res.status(200).type('text/plain').send('OK');
+});
+
 // TikTok
 app.get('/tiktok', (req, res) => {
   res.sendFile('tiktok.html', { root: 'public' });
