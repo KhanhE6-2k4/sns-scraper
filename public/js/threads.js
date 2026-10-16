@@ -124,6 +124,11 @@ function escapeHtml(value) {
         "'": '&#39;',
     })[char]);
 }
+
+// Thêm "s" cho danh từ tiếng Anh khi số lượng khác 1 (0 videos, 1 video, 2 videos).
+function pluralize(count, word) {
+    return Number(count) === 1 ? word : `${word}s`;
+}
 // ============================================================
 // START THREADS DISCOVERY
 // ============================================================
@@ -218,7 +223,7 @@ runBtn.addEventListener('click', async () => {
                 <strong>${Number(data.count ?? 0)}</strong>
                 bài đăng từ
                 <strong>${Number(data.creatorCount ?? 0)}</strong>
-                creators
+                ${pluralize(data.creatorCount, 'creator')}
             </div>
 
             <div class="download-section">

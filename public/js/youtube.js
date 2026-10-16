@@ -190,6 +190,11 @@ function escapeHtml(value) {
         "'": '&#39;',
     })[char]);
 }
+
+// Thêm "s" cho danh từ tiếng Anh khi số lượng khác 1 (0 videos, 1 video, 2 videos).
+function pluralize(count, word) {
+    return Number(count) === 1 ? word : `${word}s`;
+}
 // ============================================================
 // START YOUTUBE DISCOVERY
 // ============================================================
@@ -198,6 +203,10 @@ runBtn.addEventListener('click', async () => {
     currentPlatform = null;
     currentJobId = null;
     updateExportButton();
+    // --------------------------------------------------------
+    // SEARCH TYPE
+    // --------------------------------------------------------
+    const searchType = getCheckedValue('searchType', 'keyword');
     // --------------------------------------------------------
     // KEYWORDS
     // --------------------------------------------------------
@@ -253,7 +262,7 @@ runBtn.addEventListener('click', async () => {
     const payload = {
         platform: 'youtube',
         queries,
-        searchType: 'keyword',
+        searchType,
         limit,
         sortBy,
         dateRange,
@@ -300,9 +309,9 @@ runBtn.addEventListener('click', async () => {
             <div class="summary">
                 Tìm thấy
                 <strong>${Number(data.count ?? 0)}</strong>
-                video từ
+                ${pluralize(data.count, 'video')} từ
                 <strong>${Number(data.creatorCount ?? 0)}</strong>
-                creators
+                ${pluralize(data.creatorCount, 'creator')}
             </div>
 
             <div class="download-section">

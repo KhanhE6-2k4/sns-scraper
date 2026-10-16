@@ -17,6 +17,9 @@ import { YouTubeProvider } from './providers/youtube/youtube-provider.js';
 import { ThreadsClient } from './providers/threads/threads-client.js';
 import { ThreadsProvider } from './providers/threads/threads-provider.js';
 
+import { FacebookClient } from './providers/facebook/facebook-client.js';
+import { FacebookProvider } from './providers/facebook/facebook-provider.js';
+
 import { ProviderRegistry } from "./services/discovery/provider-registry.js";
 import { DiscoveryService } from "./services/discovery/discovery-service.js";
 import { ResultStorageService } from './services/discovery/result-storage-service.js';
@@ -83,11 +86,21 @@ const threadsProvider = new ThreadsProvider({
   client: threadsClient,
 });
 
+// Facebook
+const facebookClient = new FacebookClient({
+  apiToken: process.env.APIFY_API_TOKEN,
+});
+
+const facebookProvider = new FacebookProvider({
+  client: facebookClient,
+});
+
 const providerRegistry = new ProviderRegistry([
   tikTokProvider,
   instagramProvider,
   youtubeProvider,
   threadsProvider,
+  facebookProvider,
 ]);
 
 const discoveryService = new DiscoveryService({
@@ -171,6 +184,11 @@ app.get('/youtube', (req, res) => {
 // Threads
 app.get('/threads', (req, res) => {
   res.sendFile('threads.html', { root: 'public' });
+})
+
+// Facebook
+app.get('/facebook', (req, res) => {
+  res.sendFile('facebook.html', { root: 'public' });
 })
 
 

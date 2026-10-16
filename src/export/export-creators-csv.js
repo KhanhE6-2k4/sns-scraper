@@ -52,15 +52,19 @@ export async function exportCreatorsCsv(videos, outputPath) {
             continue;
         }
 
-        const mapKey = `${video.platform ?? 'tiktok'}:${creatorId}`;
+        const platform = video.platform ?? 'tiktok';
+
+        const mapKey = `${platform}:${creatorId}`;
 
 
         if (!creators.has(mapKey)) {
-          const profileUrl = getCreatorProfileUrl(
-              video.platform ?? 'tiktok',
+          // Ưu tiên URL thật từ Actor (vd. Facebook profile.php?id=... không dựng lại được từ username).
+          const profileUrl = creator.url || getCreatorProfileUrl(
+              platform,
               creator.username
           );
           creators.set(mapKey, {
+              platform,
               creator: creator.username || '',
               creatorName: creator.nickname || '',
               profileUrl,
@@ -84,6 +88,7 @@ export async function exportCreatorsCsv(videos, outputPath) {
     }
 
     const headers = [
+        'Platform',
         'Creator',
         'Creator Name',
         'Profile URL',
@@ -102,6 +107,7 @@ export async function exportCreatorsCsv(videos, outputPath) {
 
     for (const creator of creators.values()) {
         rows.push([
+            creator.platform,
             creator.creator,
             creator.creatorName,
             creator.profileUrl,

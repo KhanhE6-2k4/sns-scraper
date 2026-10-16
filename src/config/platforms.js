@@ -6,6 +6,7 @@ export const SUPPORTED_PLATFORMS = [
   'instagram',
   'youtube',
   'threads',
+  'facebook',
 ];
 
 const PROFILE_URL_BUILDERS = {
@@ -13,6 +14,7 @@ const PROFILE_URL_BUILDERS = {
   instagram: username => `https://www.instagram.com/${username}/`,
   youtube: username => `https://www.youtube.com/@${username}`,
   threads: username => `https://www.threads.com/@${username}`,
+  facebook: username => `https://www.facebook.com/${username}`,
 };
 
 export function isSupportedPlatform(platform) {
