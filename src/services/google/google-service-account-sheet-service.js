@@ -1,6 +1,15 @@
 
 import { createGoogleServiceAccountClient } from '../../integrations/google/google-service-account-client.js';
 
+// Tên cột dùng làm khóa chống trùng creator (khớp header trong export-creators-csv.js).
+const PROFILE_URL_HEADER = 'Profile URL';
+
+const DUPLICATE_ONLY_MESSAGE = 'Tất cả creator đã có trong tab hôm nay.';
+
+function normalizeProfileUrl(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
 export class GoogleServiceAccountSheetService {
   constructor({ resultStorageService }) {
     this.resultStorageService = resultStorageService;
@@ -225,6 +234,22 @@ export class GoogleServiceAccountSheetService {
     return rows;
   }
 
+  // Lấy tập Profile URL đã có trong tab, tìm cột theo tên ở dòng header nên không phụ thuộc thứ tự cột.
+  getExistingProfileUrls(existingRows) {
+    const [header = [], ...dataRows] = existingRows;
+    const columnIndex = header.indexOf(PROFILE_URL_HEADER);
+
+    if (columnIndex === -1) {
+      return new Set();
+    }
+
+    return new Set(
+      dataRows
+        .map(row => normalizeProfileUrl(row[columnIndex]))
+        .filter(Boolean)
+    );
+  }
+
   async writeResults(spreadsheetUrl, platform, jobId) {
     const spreadsheetId =
       this.extractSpreadsheetId(spreadsheetUrl);
@@ -252,22 +277,33 @@ export class GoogleServiceAccountSheetService {
         sheetTitle
       );
 
-      // Tab đã tồn tại thì không ghi lại header.
       const existingData = await sheets.spreadsheets.values.get({
         spreadsheetId,
-        range: `'${sheetTitle}'!A1:A1`,
+        range: `'${sheetTitle}'!A:Z`,
       });
 
-      const hasHeader =
-        existingData.data.values?.length > 0;
+      const existingRows = existingData.data.values ?? [];
+
+      // Tab đã tồn tại thì không ghi lại header.
+      const hasHeader = existingRows.length > 0;
+
+      // Bỏ creator đã có trong tab hôm nay, so khớp theo Profile URL.
+      const existingProfileUrls = this.getExistingProfileUrls(existingRows);
+      const profileUrlIndex = rows[0].indexOf(PROFILE_URL_HEADER);
+
+      const newRows = rows.slice(1).filter(row =>
+        !existingProfileUrls.has(normalizeProfileUrl(row[profileUrlIndex]))
+      );
+
+      const skippedCount = rows.length - 1 - newRows.length;
+
+      if (newRows.length === 0) {
+        throw new Error(DUPLICATE_ONLY_MESSAGE);
+      }
 
       const rowsToAppend = hasHeader
-        ? rows.slice(1)
-        : rows;
-
-      if (rowsToAppend.length === 0) {
-        throw new Error('Không có dữ liệu mới để export.');
-      }
+        ? newRows
+        : [rows[0], ...newRows];
 
       const response = await sheets.spreadsheets.values.append({
         spreadsheetId,
@@ -287,12 +323,11 @@ export class GoogleServiceAccountSheetService {
         sheetId,
         sheetTitle,
         rowCount: updatedRows,
-        creatorCount: Math.max(0, updatedRows),
+        creatorCount: newRows.length,
+        skippedCount,
       };
     } catch (error) {
-      if (
-        error.message === 'Không có dữ liệu mới để export.'
-      ) {
+      if (error.message === DUPLICATE_ONLY_MESSAGE) {
         throw error;
       }
 

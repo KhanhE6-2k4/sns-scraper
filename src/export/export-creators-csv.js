@@ -94,9 +94,11 @@ export async function exportCreatorsCsv(videos, outputPath) {
         'Profile URL',
         'Verified',
         'Followers',
-        'Total Likes',
-        'Video Count',
-        'Videos Found',
+        // Tạm ẩn vì không phải nền tảng nào cũng có các chỉ số này.
+        // Bỏ comment cùng lúc ở cả headers và rows để không lệch cột.
+        // 'Total Likes',
+        // 'Video Count',
+        // 'Videos Found',
         'Queries Matched',
         'Bio',
     ];
@@ -113,9 +115,9 @@ export async function exportCreatorsCsv(videos, outputPath) {
             creator.profileUrl,
             creator.verified,
             creator.followers,
-            creator.totalLikes,
-            creator.videoCount,
-            creator.videosFound,
+            // creator.totalLikes,
+            // creator.videoCount,
+            // creator.videosFound,
             [...creator.queries].join('; '),
             creator.bio,
         ]);

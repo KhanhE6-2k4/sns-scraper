@@ -110,7 +110,7 @@ exportGoogleSheetBtn.addEventListener('click', async () => {
                 // 'Export Google Sheet thất bại.'
                 result.message || result.error || 'Nhập dữ liệu sang Google Sheet thất bại.');
         }
-        googleSheetStatus.textContent = `✓ Đã nhập dữ liệu của ${result.creatorCount} creators vào tab "${result.sheetTitle}"`;
+        googleSheetStatus.textContent = `✓ Đã nhập dữ liệu của ${result.creatorCount} ${pluralize(result.creatorCount, 'creator')} vào tab "${result.sheetTitle}"${result.skippedCount ? ` (bỏ qua ${result.skippedCount} ${pluralize(result.skippedCount, 'creator')} đã có)` : ''}`;
     } catch (error) {
         console.error(error);
         googleSheetStatus.textContent = `✗ ${error.message}`;
@@ -272,7 +272,7 @@ runBtn.addEventListener('click', async () => {
     // --------------------------------------------------------
     const limit = Number(document.getElementById('limit').value);
     if (!Number.isInteger(limit) || limit < 1 || limit > 500) {
-        alert('Số lượng video phải là số nguyên từ 1 đến 500.');
+        alert('Số lượng profile tối đa mỗi truy vấn phải là số nguyên từ 1 đến 500.');
         return;
     }
     // --------------------------------------------------------
@@ -383,10 +383,8 @@ runBtn.addEventListener('click', async () => {
         result.innerHTML = `
             <div class="summary">
                 Tìm thấy
-                <strong>${Number(data.count ?? 0)}</strong>
-                ${pluralize(data.count, 'video')} từ
                 <strong>${Number(data.creatorCount ?? 0)}</strong>
-                ${pluralize(data.creatorCount, 'creator')}
+                ${pluralize(data.creatorCount, 'creator')}!
             </div>
 
             <div class="download-section">

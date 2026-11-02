@@ -1,6 +1,8 @@
 // Chịu trách nhiệm giao tiếp với Scrape provider trên apify
 
 import { ApifyClient } from 'apify-client';
+import { MAX_PARALLEL_RUNS } from '../../config/apify.js';
+import { runInGroups } from '../../utils/array.js';
 
 const ACTOR_ID = 'scrapesmith/facebook-search-scraper';
 
@@ -25,16 +27,21 @@ export class FacebookClient {
       throw new Error('queries must be a non-empty array');
     }
 
-    const input = {
-      queries,
-      searchType: SEARCH_TYPE,
-      maxResultsPerQuery: Math.ceil(limit / queries.length),
-    };
+    const perQuery = Math.ceil(limit / queries.length);
 
-    console.log('Input:');
-    console.log(JSON.stringify(input, null, 2));
+    // Chia từ khóa thành nhiều nhóm, mỗi nhóm là một run chạy song song.
+    return runInGroups(queries, MAX_PARALLEL_RUNS, group => {
+      const input = {
+        queries: group,
+        searchType: SEARCH_TYPE,
+        maxResultsPerQuery: perQuery,
+      };
 
-    return this.#runActor(input, limit);
+      console.log('Input:');
+      console.log(JSON.stringify(input, null, 2));
+
+      return this.#runActor(input, perQuery * group.length);
+    });
   }
 
   async #runActor(input, limit) {

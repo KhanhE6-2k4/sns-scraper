@@ -80,7 +80,7 @@ if (googleSheetUrlInput && validateGoogleSheetBtn && exportGoogleSheetBtn && goo
             if (!response.ok || !data.success) {
                 throw new Error(data.message || data.error || 'Nhập dữ liệu sang Google Sheet thất bại.');
             }
-            googleSheetStatus.textContent = `✓ Đã nhập dữ liệu của ${data.creatorCount} creators vào tab "${data.sheetTitle}"`;
+            googleSheetStatus.textContent = `✓ Đã nhập dữ liệu của ${data.creatorCount} ${pluralize(data.creatorCount, 'creator')} vào tab "${data.sheetTitle}"${data.skippedCount ? ` (bỏ qua ${data.skippedCount} ${pluralize(data.skippedCount, 'creator')} đã có)` : ''}`;
         } catch (error) {
             console.error(error);
             googleSheetStatus.textContent = `✗ ${error.message}`;
@@ -154,7 +154,7 @@ runBtn.addEventListener('click', async () => {
     // --------------------------------------------------------
     const limit = Number(document.getElementById('limit').value);
     if (!Number.isInteger(limit) || limit < 1 || limit > 500) {
-        alert('Số lượng bài đăng phải là số nguyên từ 1 đến 500.');
+        alert('Số lượng profile tối đa mỗi truy vấn phải là số nguyên từ 1 đến 500.');
         return;
     }
     // --------------------------------------------------------
@@ -220,10 +220,8 @@ runBtn.addEventListener('click', async () => {
         result.innerHTML = `
             <div class="summary">
                 Tìm thấy
-                <strong>${Number(data.count ?? 0)}</strong>
-                bài đăng từ
                 <strong>${Number(data.creatorCount ?? 0)}</strong>
-                ${pluralize(data.creatorCount, 'creator')}
+                ${pluralize(data.creatorCount, 'creator')}!
             </div>
 
             <div class="download-section">

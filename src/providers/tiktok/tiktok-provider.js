@@ -1,4 +1,5 @@
 import { SocialPlatformProvider } from "../contracts/social-platform-provider.js";
+import { MAX_PARALLEL_RUNS } from '../../config/apify.js';
 import { normalizeTikTokVideo } from "./tiktok-normalizer.js";
 
 export class TikTokProvider extends SocialPlatformProvider {
@@ -44,12 +45,17 @@ export class TikTokProvider extends SocialPlatformProvider {
       const keywordLimit = Math.floor(limit / 2);
       const hashtagLimit = limit - keywordLimit;
 
+      // Hai nhánh chạy song song nên chia đôi số run để tổng không vượt MAX_PARALLEL_RUNS.
+      const keywordRuns = Math.ceil(MAX_PARALLEL_RUNS / 2);
+      const hashtagRuns = Math.max(1, MAX_PARALLEL_RUNS - keywordRuns);
+
       const [keywordResults, hashtagResults] = await Promise.all([
         keywordLimit > 0
           ? this.client.scrapeKeywords({
               queries,
               ...searchOptions,
               limit: keywordLimit,
+              maxParallelRuns: keywordRuns,
             })
           : Promise.resolve([]),
 
@@ -58,6 +64,7 @@ export class TikTokProvider extends SocialPlatformProvider {
               hashtags: queries,
               ...searchOptions,
               limit: hashtagLimit,
+              maxParallelRuns: hashtagRuns,
             })
           : Promise.resolve([]),
       ]);

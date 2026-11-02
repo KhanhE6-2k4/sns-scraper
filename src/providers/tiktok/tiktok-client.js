@@ -1,6 +1,8 @@
 // Chịu trách nhiệm giao tiếp với Scrape provider trên apify
 
 import { ApifyClient } from 'apify-client';
+import { MAX_PARALLEL_RUNS } from '../../config/apify.js';
+import { runInGroups } from '../../utils/array.js';
 
 const ACTOR_ID = 'poidata/tiktok-scraper';
 // const ACTOR_ID = 'apidojo/tiktok-scraper-api';
@@ -90,7 +92,8 @@ export class TikTokClient {
     // dateTo,
     dateRange,
     limit = 10,
-    sortBy = 'relevance'
+    sortBy = 'relevance',
+    maxParallelRuns = MAX_PARALLEL_RUNS,
   }) {
     if (!Array.isArray(hashtags) || hashtags.length === 0) {
       throw new Error('hashtags must be a non-mepty array');
@@ -108,31 +111,28 @@ export class TikTokClient {
     });
 
     const dateFilters = getDateRange(dateRange);
+    const perQuery = Math.ceil(limit / hashtags.length);
 
-    const input = {
-      hashtags: normalizedHashtags,
-      // startUrls,
-      maxItems: limit,
-      sortBy,
-      ...dateFilters,
-      // location: 'VN',
-      maxItemsPerQuery: Math.ceil(limit / hashtags.length),
-      // sortType: sortMapper.get(sortBy),
-      uniqueAuthors: false
-      // dateRange: dateRangeMapper.get(dateRange),
-    }
+    // Chia hashtag thành nhiều nhóm, mỗi nhóm là một run chạy song song.
+    return runInGroups(normalizedHashtags, maxParallelRuns, group => {
+      const input = {
+        hashtags: group,
+        // startUrls,
+        maxItems: perQuery * group.length,
+        sortBy,
+        ...dateFilters,
+        // location: 'VN',
+        maxItemsPerQuery: perQuery,
+        // sortType: sortMapper.get(sortBy),
+        uniqueAuthors: false
+        // dateRange: dateRangeMapper.get(dateRange),
+      }
 
-    // if (dateFrom) {
-    //   input.dateFrom = dateFrom;
-    // }
-    // if (dateTo) {
-    //   input.dateTo = dateTo;
-    // }
+      console.log('Input:');
+      console.log(JSON.stringify(input, null, 2));
 
-    console.log('Input:');
-    console.log(JSON.stringify(input, null, 2));
-
-    return this.#runActor(input);
+      return this.#runActor(input);
+    });
   }
 
   async scrapeKeywords({
@@ -141,7 +141,8 @@ export class TikTokClient {
     // dateTo,
     dateRange,
     limit = 10,
-    sortBy = 'relevance'
+    sortBy = 'relevance',
+    maxParallelRuns = MAX_PARALLEL_RUNS,
   }) {
     if (!Array.isArray(queries) || queries.length === 0) {
       throw new Error('queries must be a non-mepty array');
@@ -153,37 +154,27 @@ export class TikTokClient {
     // }
 
     const dateFilters = getDateRange(dateRange);
+    const perQuery = Math.ceil(limit / queries.length);
 
-    const input = {
-      searchQueries: queries,
-      // keywords,
-      maxItems: limit,
-      maxItemsPerQuery: Math.ceil(limit / queries.length),
-      sortBy,
-      uniqueAuthors: false,
-      ...dateFilters,
-      // dateRange: dateRangeMapper.get(dateRange),
-      // location: 'VN',
-    }
+    // Chia từ khóa thành nhiều nhóm, mỗi nhóm là một run chạy song song.
+    return runInGroups(queries, maxParallelRuns, group => {
+      const input = {
+        searchQueries: group,
+        // keywords,
+        maxItems: perQuery * group.length,
+        maxItemsPerQuery: perQuery,
+        sortBy,
+        uniqueAuthors: false,
+        ...dateFilters,
+        // dateRange: dateRangeMapper.get(dateRange),
+        // location: 'VN',
+      }
 
-    // if (dateFrom) {
-    //   input.dateFrom = dateFrom;
-    // }
-    // if (dateTo) {
-    //   input.dateTo = dateTo;
-    // }
+      console.log('Input:');
+      console.log(JSON.stringify(input, null, 2));
 
-    // if (dateRange) {
-    //   if (!dateRangeMapper.has(dateRange)) {
-    //     throw new Error(`Invalid dateRange: ${dateRange}`);
-    //   }
-    //   input.dateRange =  dateRangeMapper.get(dateRange);
-    // }
-
-    console.log('Input:');
-    console.log(JSON.stringify(input, null, 2));
-
-    return this.#runActor(input);
+      return this.#runActor(input);
+    });
   }
 
   async #runActor(input) {

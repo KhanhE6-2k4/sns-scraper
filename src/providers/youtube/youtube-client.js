@@ -1,4 +1,6 @@
 import { ApifyClient } from 'apify-client';
+import { MAX_PARALLEL_RUNS } from '../../config/apify.js';
+import { runInGroups } from '../../utils/array.js';
 
 const ACTOR_ID = 'solidcode/youtube-scraper';
 
@@ -33,8 +35,8 @@ export class YouTubeClient {
     sortBy = 'relevance',
     dateRange = 'any',
   } = {}) {
-    if (!Number.isInteger(limit) || limit < 1 || limit > 500) {
-      throw new Error('limit must be an integer between 1 and 500');
+    if (!Number.isInteger(limit) || limit < 1) {
+      throw new Error('limit must be a positive integer');
     }
 
     if (!VALID_SORT_OPTIONS.includes(sortBy)) {
@@ -65,27 +67,35 @@ export class YouTubeClient {
     // };
 
     const total_queries = searchKeywords.length;
-    const input = {
-      maxResults: Math.floor(limit / total_queries),
-      sortBy,
-      uploadDate: dateFilter,
-      country: 'vn',
-      language: 'vi',
-    };
+    const maxResults = Math.floor(limit / total_queries);
 
-    if (searchKeywords.length > 0) {
-      input.searchQueries = searchKeywords;
+    // Giới hạn theo từng truy vấn (khớp max của ô nhập trên youtube.html).
+    if (maxResults < 1 || maxResults > 5000) {
+      throw new Error('limit per query must be between 1 and 5000');
     }
 
-    // if (urls.length > 0) {
-    //   input.startUrls = urls;
-    // }
+    // Chia từ khóa thành nhiều nhóm, mỗi nhóm là một run chạy song song.
+    const items = await runInGroups(searchKeywords, MAX_PARALLEL_RUNS, async group => {
+      const input = {
+        maxResults,
+        sortBy,
+        uploadDate: dateFilter,
+        country: 'vn',
+        language: 'vi',
+        searchQueries: group,
+      };
 
-    const run = await this.client.actor(ACTOR_ID).call(input);
+      console.log('Input:');
+      console.log(JSON.stringify(input, null, 2));
 
-    const { items } = await this.client
-      .dataset(run.defaultDatasetId)
-      .listItems();
+      const run = await this.client.actor(ACTOR_ID).call(input);
+
+      const { items } = await this.client
+        .dataset(run.defaultDatasetId)
+        .listItems();
+
+      return items;
+    });
 
     const newItems = items.map(item => ({
       ...item,
@@ -93,6 +103,65 @@ export class YouTubeClient {
     }));
 
     console.log(`Returned ${newItems.length} videos`);
-    return newItems;
+    return this.#attachChannelInfo(newItems);
+  }
+
+  // Kết quả tìm kiếm không có subscribers/mô tả kênh, nên chạy lại Actor theo handle để lấy.
+  async #attachChannelInfo(videos) {
+    const handles = [...new Set(
+      videos
+        .map(video => video.channel?.handle)
+        .filter(Boolean)
+    )];
+
+    if (handles.length === 0) {
+      return videos;
+    }
+
+    const channels = await runInGroups(
+      handles,
+      MAX_PARALLEL_RUNS,
+      group => this.#fetchChannels(group)
+    );
+
+    const channelByHandle = new Map(
+      channels
+        .filter(item => item.recordType === 'channel' && item.handle)
+        .map(item => [item.handle.toLowerCase(), item])
+    );
+
+    console.log(`Returned ${channelByHandle.size} channels`);
+
+    return videos.map(video => ({
+      ...video,
+      channelInfo: channelByHandle.get(video.channel?.handle?.toLowerCase()) ?? null,
+    }));
+  }
+
+  async #fetchChannels(handles) {
+    // maxResults: 1 + fetchChannelInfo chỉ trả về 1 dòng channel cho mỗi handle, không kèm video.
+    const input = {
+      youtubeHandles: handles,
+      maxResults: 1,
+      fetchChannelInfo: true,
+      channelContent: 'videos',
+    };
+
+    console.log('Input:');
+    console.log(JSON.stringify(input, null, 2));
+
+    const run = await this.client.actor(ACTOR_ID).call(input);
+
+    // Nhóm nào lỗi thì bỏ qua, video vẫn được trả về, chỉ thiếu thông tin kênh.
+    if (run.status !== 'SUCCEEDED') {
+      console.warn(`YouTube channel info ${run.status} (runId: ${run.id})`);
+      return [];
+    }
+
+    const { items } = await this.client
+      .dataset(run.defaultDatasetId)
+      .listItems();
+
+    return items;
   }
 }

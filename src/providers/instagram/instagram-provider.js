@@ -13,65 +13,31 @@ export class InstagramProvider extends SocialPlatformProvider {
 
   async discover(request) {
     const {
-      queries,
-      searchType,
-      dateRange,
+      queries = [],
+      searchType = 'keyword',
       limit = 10,
+      options = {},
     } = request;
 
-    const searchOptions = {
-      dateRange,
+    // Actor chỉ hỗ trợ tìm theo từ khóa.
+    if (searchType !== 'keyword') {
+      throw new Error(
+        `Unsupported Instagram search type: ${searchType}`
+      );
+    }
+
+    if (queries.length === 0) {
+      throw new Error('Provide at least one search query');
+    }
+
+    return this.client.scrapeKeywords({
+      queries,
+      cookies: options.cookies,
       limit,
-    };
-
-    if (searchType === 'hashtag') {
-      return this.client.scrapeHashtags({
-        hashtags: queries,
-        ...searchOptions,
-      });
-    }
-
-    if (searchType === 'keyword') {
-      return this.client.scrapeKeywords({
-        queries,
-        ...searchOptions,
-      });
-    }
-
-    if (searchType === 'all') {
-      const keywordLimit = Math.floor(limit / 2);
-      const hashtagLimit = limit - keywordLimit;
-
-      const [keywordResults, hashtagResults] = await Promise.all([
-        keywordLimit > 0
-
-        ? this.client.scrapeKeywords({
-            queries,
-            ...searchOptions,
-            limit: keywordLimit
-          })
-        : Promise.resolve([]),
-        hashtagLimit > 0
-        ? this.client.scrapeHashtags({
-            hashtags: queries,
-            ...searchOptions,
-            limit: hashtagLimit,
-          })
-        : Promise.resolve([]),
-      ]);
-
-      return [
-        ...keywordResults,
-        ...hashtagResults,
-      ].slice(0, limit);
-    }
-
-    throw new Error(
-      `Unsupported Instagram search type: ${searchType}`
-    );
+    });
   }
 
   normalize(item, context = {}) {
-    return normalizeInstagramPost(item, context.keyword ?? item.searchQuery ?? '');
+    return normalizeInstagramPost(item, context.query || item.query || '');
   }
 }

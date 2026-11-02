@@ -52,6 +52,7 @@ export function rangeFilterSocialContent(
     followers = {},
     likes = {},
     videoCount = {},
+    averageLikes = {},
   } = {}
 ) {
   return contents.filter(content => {
@@ -135,6 +136,34 @@ export function rangeFilterSocialContent(
       }
 
       if (Number(value) < videoCount.min) {
+        return false;
+      }
+    }
+
+    // Chỉ lọc trung bình likes các bài gần nhất khi frontend gửi min/max
+    if (
+      averageLikes.min !== undefined ||
+      averageLikes.max !== undefined
+    ) {
+      const value = creator.averageLikes;
+
+      if (value == null || !Number.isFinite(Number(value))) {
+        return false;
+      }
+
+      const averageLikesValue = Number(value);
+
+      if (
+        averageLikes.min !== undefined &&
+        averageLikesValue < averageLikes.min
+      ) {
+        return false;
+      }
+
+      if (
+        averageLikes.max !== undefined &&
+        averageLikesValue > averageLikes.max
+      ) {
         return false;
       }
     }

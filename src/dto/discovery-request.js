@@ -21,12 +21,18 @@ export class DiscoveryRequest {
     isFilteredByVideoCount = false,
     minVideoCount,
 
+    isFilteredByAverageLikes = false,
+    minAverageLikes,
+    maxAverageLikes,
+
     ...options
   }) {
     this.platform = platform;
     this.queries = queries;
     this.searchType = searchType;
-    this.limit = limit;
+
+    // Frontend gửi số lượng cho mỗi truy vấn, đổi sang tổng để các client chia lại theo từng truy vấn.
+    this.limit = Number(limit) * Math.max(queries.length, 1);
     this.sortBy = sortBy;
     this.dateRange = dateRange;
 
@@ -35,6 +41,7 @@ export class DiscoveryRequest {
       followers: {},
       likes: {},
       videoCount: {},
+      averageLikes: {},
     };
 
     if (isFilteredByFollowers) {
@@ -63,6 +70,16 @@ export class DiscoveryRequest {
       minVideoCount !== ''
     ) {
       this.filters.videoCount.min = Number(minVideoCount);
+    }
+
+    if (isFilteredByAverageLikes) {
+      if (minAverageLikes !== undefined && minAverageLikes !== '') {
+        this.filters.averageLikes.min = Number(minAverageLikes);
+      }
+
+      if (maxAverageLikes !== undefined && maxAverageLikes !== '') {
+        this.filters.averageLikes.max = Number(maxAverageLikes);
+      }
     }
 
     this.options = options;

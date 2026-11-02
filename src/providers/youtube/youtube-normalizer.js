@@ -26,11 +26,12 @@ export function normalizeYouTubeVideo(item, query = '') {
       username: item.channel?.handle?.slice(1) ?? '',
       nickname: item.channel?.name ?? '',
       verified: false, // Ko có trường này trong dữ liệu trả về của Actor, nhưng giữ lại để tương thích với các provider khác.
-      followers: item.channelSubscribers ?? null, // Ko có trường này trong dữ liệu trả về của Actor, nhưng giữ lại để tương thích với các provider khác.
+      // channelInfo: dòng channel lấy ở bước 2 (youtube-client.js), null nếu không lấy được.
+      followers: item.channelInfo?.subscriberCount ?? null,
       following: null, // Ko có trường này trong dữ liệu trả về của Actor, nhưng giữ lại để tương thích với các provider khác.
       totalLikes: null, // Ko có trường này trong dữ liệu trả về của Actor, nhưng giữ lại để tương thích với các provider khác.
-      videoCount: null, // Ko có trường này trong dữ liệu trả về của Actor, nhưng giữ lại để tương thích với các provider khác.
-      bio: null, // Ko có trường này trong dữ liệu trả về của Actor, nhưng giữ lại để tương thích với các provider khác.
+      videoCount: item.channelInfo?.videoCount ?? null,
+      bio: item.channelInfo?.description ?? null,
       avatar: null, // Ko có trường này trong dữ liệu trả về của Actor, nhưng giữ lại để tương thích với các provider khác.
       url: item.channel?.url ?? '',
     },

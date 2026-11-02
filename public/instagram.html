@@ -64,31 +64,26 @@
         <div id="googleSheetStatus" class="google-sheet-status"></div>
     </div>
 
+    <!-- Actor tìm bài đăng bằng cookie của tài khoản Instagram đã đăng nhập -->
+    <label for="instagramCookies">Instagram Cookies</label>
+    <input
+        id="instagramCookies"
+        type="text"
+        placeholder="sessionid=xxxxxx"
+        autocomplete="off"
+        spellcheck="false"
+    >
+
     <label>Kiểu tìm kiếm</label>
     <div class="search-type">
         <label class="search-type-option">
             <input
                 type="radio"
                 name="searchType"
-                value="all"
+                value="keyword"
                 checked
             >
-            <span>Tất cả</span>
-        </label>
-        <label class="search-type-option">
-            <input
-                type="radio"
-                name="searchType"
-                value="keyword"
-            >
             <span>Từ khóa</span>
-        </label>
-        <label class="search-type-option">
-            <input type="radio"
-                name="searchType"
-                value="hashtag"
-            >
-            <span>Hashtag</span>
         </label>
     </div>
 
@@ -122,25 +117,26 @@
         </div>
     </div>
 
+    <!-- Average Likes: trung bình likes các bài gần nhất, lấy từ Profile Actor -->
     <div class="filter-section">
-        <label>Lọc theo Followers</label>
+        <label>Lọc theo số Likes trung bình</label>
         <div class="filter-body">
             <div class="radio-group">
                 <label>
-                    <input type="radio" name="filterFollowers" value="no" checked>
+                    <input type="radio" name="filterAverageLikes" value="no" checked>
                     Không
                 </label>
                 <label>
-                    <input type="radio" name="filterFollowers" value="yes">
+                    <input type="radio" name="filterAverageLikes" value="yes">
                     Có
                 </label>
             </div>
 
-            <div id="followersOptions" class="filter-grid">
+            <div id="averageLikesOptions" class="filter-grid">
                 <div class="filter-group">
-                    <label for="minFollowers">Followers tối thiểu</label>
+                    <label for="minAverageLikes">Số Likes trung bình tối thiểu</label>
                     <input
-                        id="minFollowers"
+                        id="minAverageLikes"
                         type="text"
                         inputmode="numeric"
                         pattern="[0-9]*"
@@ -149,9 +145,9 @@
                     >
                 </div>
                 <div class="filter-group">
-                    <label for="maxFollowers">Followers tối đa</label>
+                    <label for="maxAverageLikes">Số Likes trung bình tối đa</label>
                     <input
-                        id="maxFollowers"
+                        id="maxAverageLikes"
                         type="text"
                         inputmode="numeric"
                         pattern="[0-9]*"
@@ -163,48 +159,15 @@
         </div>
     </div>
 
-    <label for="limit">Số lượng bài đăng tối đa</label>
+    <!-- Search Actor không hỗ trợ lọc thời gian nên không có bộ lọc Thời gian -->
+
+    <label for="limit">Số lượng profile tối đa mỗi truy vấn</label>
     <input id="limit" type="number" value="10" min="1" max="500">
 
-    <div class="filter-section">
-        <label>Thời gian</label>
-        <div class="filter-body">
-            <div class="radio-group">
-                <label>
-                    <span>Tất cả</span>
-                    <input type="radio" name="dateMode" value="all" checked>
-                </label>
-                <label>
-                    <span>Tùy chọn</span>
-                    <input type="radio" name="dateMode" value="custom">
-                </label>
-            </div>
-
-            <div id="dateOptions" class="date-options disabled">
-                <div class="date-range-options">
-                    <label>
-                        <input type="radio" name="dateRange" value="1d" checked disabled>
-                        1 ngày
-                    </label>
-                    <label>
-                        <input type="radio" name="dateRange" value="1w" disabled>
-                        1 tuần
-                    </label>
-                    <label>
-                        <input type="radio" name="dateRange" value="1m" disabled>
-                        1 tháng
-                    </label>
-                    <label>
-                        <input type="radio" name="dateRange" value="3m" disabled>
-                        3 tháng
-                    </label>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="btn-wrapper">
-        <button id="runBtn" type="button">Start</button>
+        <button id="runBtn" type="button">
+            Tìm kiếm
+        </button>
     </div>
 
     <div id="status"></div>

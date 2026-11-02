@@ -1,6 +1,8 @@
 // Chịu trách nhiệm giao tiếp với Scrape provider trên apify
 
 import { ApifyClient } from 'apify-client';
+import { MAX_PARALLEL_RUNS } from '../../config/apify.js';
+import { runInGroups } from '../../utils/array.js';
 
 const ACTOR_ID = 'automation_craft/threads-search-scraper';
 
@@ -68,6 +70,7 @@ export class ThreadsClient {
     dateRange,
     limit = 10,
     sortBy = 'relevance',
+    maxParallelRuns = MAX_PARALLEL_RUNS,
   }) {
     if (!Array.isArray(hashtags) || hashtags.length === 0) {
       throw new Error('hashtags must be a non-empty array');
@@ -83,15 +86,18 @@ export class ThreadsClient {
       return hashtag;
     });
 
-    const input = this.#buildInput({
-      tags,
-      dateRange,
-      limit,
-      sortBy,
-      queryCount: tags.length,
-    });
+    const perQuery = Math.ceil(limit / tags.length);
 
-    return this.#runActor(input);
+    // Chia tag thành nhiều nhóm, mỗi nhóm là một run chạy song song.
+    return runInGroups(tags, maxParallelRuns, group => this.#runActor(
+      this.#buildInput({
+        tags: group,
+        dateRange,
+        limit: perQuery * group.length,
+        sortBy,
+        queryCount: group.length,
+      })
+    ));
   }
 
   async scrapeKeywords({
@@ -99,25 +105,32 @@ export class ThreadsClient {
     dateRange,
     limit = 10,
     sortBy = 'relevance',
+    maxParallelRuns = MAX_PARALLEL_RUNS,
   }) {
     if (!Array.isArray(queries) || queries.length === 0) {
       throw new Error('queries must be a non-empty array');
     }
 
-    const input = this.#buildInput({
-      searchQueries: queries,
-      dateRange,
-      limit,
-      sortBy,
-      queryCount: queries.length,
-    });
+    const perQuery = Math.ceil(limit / queries.length);
 
-    return this.#runActor(input);
+    // Chia từ khóa thành nhiều nhóm, mỗi nhóm là một run chạy song song.
+    return runInGroups(queries, maxParallelRuns, group => this.#runActor(
+      this.#buildInput({
+        searchQueries: group,
+        dateRange,
+        limit: perQuery * group.length,
+        sortBy,
+        queryCount: group.length,
+      })
+    ));
   }
 
   #buildInput({ dateRange, limit, sortBy, queryCount, ...searchInput }) {
     const input = {
       ...searchInput,
+      // Actor mặc định loại bài không chứa đúng chữ của từ khóa,
+      // làm mất kết quả khi từ khóa và bài viết khác dấu (vd. "tieng anh" vs "tiếng anh").
+      requireKeywordInText: false,
       searchMode: getSearchMode(sortBy),
       maxPosts: limit,
       maxPostsPerQuery: Math.ceil(limit / queryCount),

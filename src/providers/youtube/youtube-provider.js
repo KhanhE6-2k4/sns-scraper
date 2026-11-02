@@ -1,4 +1,3 @@
-
 import { SocialPlatformProvider } from '../contracts/social-platform-provider.js';
 import { normalizeYouTubeVideo } from './youtube-normalizer.js';
 
@@ -47,7 +46,7 @@ export class YouTubeProvider extends SocialPlatformProvider {
   normalize(item, context = {}) {
     return normalizeYouTubeVideo(
       item,
-      context.keyword ?? item.sourceInput ?? ''
+      context.query ?? ''
     );
   }
 }

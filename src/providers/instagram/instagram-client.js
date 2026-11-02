@@ -1,62 +1,22 @@
 // Chịu trách nhiệm giao tiếp với Scrape provider trên apify
 
 import { ApifyClient } from 'apify-client';
+import { MAX_PARALLEL_RUNS } from '../../config/apify.js';
+import { runInGroups } from '../../utils/array.js';
 
-const ACTOR_ID = 'apidojo/instagram-scraper-api';
+// Bước 1: tìm bài đăng theo từ khóa (cần cookie đăng nhập).
+const SEARCH_ACTOR_ID = 'shareze001/instagram-search-posts-by-cookies';
 
-function formatLocalDate(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+// Bước 2: lấy thông tin profile (followers, averageLikes, ...) của tác giả các bài đăng.
+const PROFILE_ACTOR_ID = 'alfalfa/instagram-profile-scraper';
 
-  return `${year}-${month}-${day}`;
-}
-
-function getDateRange(dateRange) {
-  if (!dateRange || dateRange === 'all') {
-    return {};
-  } 
-
-  const today = new Date();
-  const from = new Date(today);
-  const to = new Date(today);
-
-  switch (dateRange) {
-    case '1d':
-      from.setDate(from.getDate() - 1);
-      break;
-
-    case '1w':
-      from.setDate(from.getDate() - 7);
-      break;
-
-    case '1m':
-      from.setMonth(from.getMonth() - 1);
-      break;
-
-    case '3m':
-      from.setMonth(from.getMonth() - 3);
-      break;
-
-    default:
-      throw new Error(`Invalid dateRange: ${dateRange}`);
-  }
-
-  return {
-    dateFrom: formatLocalDate(from),
-    dateTo: formatLocalDate(to),
-  };
-}
-
-function normalizeHashtag(value) {
+// Actor đưa keyword vào HTTP header (chỉ nhận latin-1) nên bị crash với chữ có dấu tiếng Việt.
+function removeVietnameseTones(value) {
   return String(value)
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Bỏ dấu tiếng Việt
+    .replace(/[̀-ͯ]/g, '') // Bỏ dấu tiếng Việt
     .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
-    .toLowerCase()
-    .replace(/^#+/, '')
-    .replace(/[^a-z0-9_]/g, ''); // Bỏ khoảng trắng, ký tự đặc biệt
+    .replace(/Đ/g, 'D');
 }
 
 export class InstagramClient {
@@ -68,70 +28,116 @@ export class InstagramClient {
     this.client = new ApifyClient({ token: apiToken });
   }
 
-  async scrapeHashtags({
-    hashtags,
-    dateRange,
-    limit = 10,
-  }) {
-    if (!Array.isArray(hashtags) || hashtags.length === 0) {
-      throw new Error('hashtags must be a non-mepty array');
-    }
-
-    const normalizedHashtags = hashtags.map((value) => {
-      const hashtag = normalizeHashtag(value);
-
-      if (!hashtag) {
-        throw new Error(`Invalid hashtag: ${value}`);
-      }
-
-      return `https://www.instagram.com/explore/tags/${encodeURIComponent(hashtag)}/`;
-    });
-
-    const input = {
-      startUrls: normalizedHashtags,
-      maxItems: limit,
-    }
-
-    if (getDateRange(dateRange)?.dateFrom) {
-      input.until = getDateRange(dateRange).dateFrom;
-    }
-
-    console.log('Input:');
-    console.log(JSON.stringify(input, null, 2));
-
-    return this.#runActor(input);
-  }
-
+  // Actor chỉ nhận 1 keyword mỗi lần chạy và không hỗ trợ hashtag, sort, lọc thời gian.
   async scrapeKeywords({
     queries,
-    dateRange,
+    cookies,
     limit = 10,
   }) {
     if (!Array.isArray(queries) || queries.length === 0) {
-      throw new Error('queries must be a non-mepty array');
+      throw new Error('queries must be a non-empty array');
     }
 
-    const input = {
-      keywords: queries,
-      maxItems: limit,
+    if (!cookies) {
+      throw new Error('Instagram cookies is required');
     }
 
-    if (getDateRange(dateRange)?.dateFrom) {
-      input.until = getDateRange(dateRange).dateFrom;
-    }
+    const size = Math.ceil(limit / queries.length);
 
-    console.log('Input:');
-    console.log(JSON.stringify(input, null, 2));
+    // Các nhóm chạy song song; trong mỗi nhóm chạy lần lượt từng keyword
+    // (Actor chỉ nhận 1 keyword/run), nên số run cùng lúc không vượt MAX_PARALLEL_RUNS.
+    const results = await runInGroups(queries, MAX_PARALLEL_RUNS, async group => {
+      const groupPosts = [];
 
-    return this.#runActor(input);
+      for (const query of group) {
+        groupPosts.push(...await this.#searchPosts({
+          cookies,
+          keyword: removeVietnameseTones(query),
+          size,
+        }, query));
+      }
+
+      return groupPosts;
+    });
+
+    const posts = results.slice(0, limit);
+
+    return this.#attachProfiles(posts);
   }
 
-  async #runActor(input) {
-    const run = await this.client.actor(ACTOR_ID).call(input);
+  async #searchPosts(input, query) {
+    const items = await this.#runActor(SEARCH_ACTOR_ID, input, `keyword "${query}"`);
+
+    // Cookie không hợp lệ thì Actor trả về record { message } thay vì bài đăng.
+    const posts = items.filter(item => {
+      if (item.message && !item.pk) {
+        console.warn(`Instagram Actor message with keyword "${query}": ${item.message}`);
+        return false;
+      }
+
+      return true;
+    });
+
+    console.log(`Returned ${posts.length} posts`);
+
+    // Output không có trường query nên gắn từ khóa gốc người dùng nhập.
+    return posts.map(item => ({
+      ...item,
+      query,
+    }));
+  }
+
+  // Gắn thông tin profile vào từng bài đăng theo username của tác giả.
+  async #attachProfiles(posts) {
+    const usernames = [...new Set(
+      posts
+        .map(post => post.user?.username)
+        .filter(Boolean)
+    )];
+
+    if (usernames.length === 0) {
+      return posts;
+    }
+
+    // Nhóm nào lỗi thì #runActor trả [], các nhóm khác vẫn giữ kết quả.
+    const items = await runInGroups(usernames, MAX_PARALLEL_RUNS, group => this.#runActor(PROFILE_ACTOR_ID, {
+      usernames: group,
+      startUrls: [],
+      maxProfiles: group.length, // Mặc định Actor chỉ lấy 50 profile/run
+      maxPostDetails: 0,
+      includeAboutSection: false,
+    }, `${group.length} usernames`));
+
+    // Profile không lấy được trả về record { error } (not_found, request_failed, ...).
+    const profileByUsername = new Map(
+      items
+        .filter(item => !item.error && item.username)
+        .map(item => [item.username.toLowerCase(), item])
+    );
+
+    console.log(`Returned ${profileByUsername.size} profiles`);
+
+    return posts.map(post => ({
+      ...post,
+      profile: profileByUsername.get(post.user?.username?.toLowerCase()) ?? null,
+    }));
+  }
+
+  async #runActor(actorId, input, label) {
+    // Không log cookies vì là thông tin đăng nhập.
+    console.log(`Input (${actorId}):`);
+    console.log(JSON.stringify({ ...input, ...(input.cookies && { cookies: '***' }) }, null, 2));
+
+    const run = await this.client.actor(actorId).call(input);
+
+    // Run lỗi thì bỏ qua, giữ kết quả của các bước/từ khóa khác.
+    if (run.status !== 'SUCCEEDED') {
+      console.warn(`Instagram Actor ${actorId} ${run.status} with ${label} (runId: ${run.id})`);
+      return [];
+    }
 
     const { items } = await this.client.dataset(run.defaultDatasetId).listItems();
 
-    console.log(`Returned ${items.length} videos`);
     return items;
   }
 }

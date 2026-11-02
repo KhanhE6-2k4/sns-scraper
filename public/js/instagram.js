@@ -80,7 +80,7 @@ if (googleSheetUrlInput && validateGoogleSheetBtn && exportGoogleSheetBtn && goo
             if (!response.ok || !data.success) {
                 throw new Error(data.message || data.error || 'Nhập dữ liệu sang Google Sheet thất bại.');
             }
-            googleSheetStatus.textContent = `✓ Đã nhập dữ liệu của ${data.creatorCount} creators vào tab "${data.sheetTitle}"`;
+            googleSheetStatus.textContent = `✓ Đã nhập dữ liệu của ${data.creatorCount} ${pluralize(data.creatorCount, 'creator')} vào tab "${data.sheetTitle}"${data.skippedCount ? ` (bỏ qua ${data.skippedCount} ${pluralize(data.skippedCount, 'creator')} đã có)` : ''}`;
         } catch (error) {
             console.error(error);
             googleSheetStatus.textContent = `✗ ${error.message}`;
@@ -90,26 +90,7 @@ if (googleSheetUrlInput && validateGoogleSheetBtn && exportGoogleSheetBtn && goo
     });
 }
 // ============================================================
-// DATE RANGE
-// ============================================================
-const dateOptions = document.getElementById('dateOptions');
-const dateModeInputs = document.querySelectorAll('input[name="dateMode"]');
-const dateRangeInputs = document.querySelectorAll('input[name="dateRange"]');
-
-function updateDateInputs() {
-    const selectedMode = document.querySelector('input[name="dateMode"]:checked');
-    const enabled = selectedMode?.value === 'custom';
-    dateOptions?.classList.toggle('disabled', !enabled);
-    dateRangeInputs.forEach(input => {
-        input.disabled = !enabled;
-    });
-}
-dateModeInputs.forEach(input => {
-    input.addEventListener('change', updateDateInputs);
-});
-updateDateInputs();
-// ============================================================
-// FOLLOWERS VALIDATION
+// RANGE VALIDATION
 // ============================================================
 function sanitize(input) {
     input.value = input.value.replace(/\D/g, '');
@@ -134,7 +115,7 @@ function setupRangeInputs(minId, maxId) {
         const min = Number(minInput.value);
         const max = Number(maxInput.value);
         if (max < min) {
-            error.textContent = 'Followers tối đa phải lớn hơn hoặc bằng followers tối thiểu.';
+            error.textContent = 'Giá trị tối đa phải lớn hơn hoặc bằng giá trị tối thiểu.';
             return false;
         }
         return true;
@@ -149,7 +130,7 @@ function setupRangeInputs(minId, maxId) {
     });
     return validate;
 }
-const validateFollowers = setupRangeInputs('minFollowers', 'maxFollowers');
+const validateAverageLikes = setupRangeInputs('minAverageLikes', 'maxAverageLikes');
 // ============================================================
 // FILTER TOGGLE
 // ============================================================
@@ -173,7 +154,7 @@ function setupFilterToggle(name, optionsId) {
     });
     update();
 }
-setupFilterToggle('filterFollowers', 'followersOptions');
+setupFilterToggle('filterAverageLikes', 'averageLikesOptions');
 // ============================================================
 // HELPERS
 // ============================================================
@@ -204,15 +185,23 @@ runBtn.addEventListener('click', async () => {
     currentJobId = null;
     updateExportButton();
     // --------------------------------------------------------
+    // INSTAGRAM COOKIES
+    // --------------------------------------------------------
+    const cookies = document.getElementById('instagramCookies').value.trim();
+    if (!cookies) {
+        alert('Vui lòng nhập Instagram cookies.');
+        return;
+    }
+    // --------------------------------------------------------
     // SEARCH TYPE
     // --------------------------------------------------------
     const searchType = getCheckedValue('searchType', 'keyword');
     // --------------------------------------------------------
-    // KEYWORDS / HASHTAGS
+    // KEYWORDS
     // --------------------------------------------------------
     const queries = document.getElementById('keywords').value.split(/\r?\n/).map(value => value.trim()).filter(Boolean);
     if (queries.length === 0) {
-        alert('Vui lòng nhập ít nhất một từ khóa hoặc hashtag.');
+        alert('Vui lòng nhập ít nhất một từ khóa.');
         return;
     }
     // --------------------------------------------------------
@@ -220,7 +209,7 @@ runBtn.addEventListener('click', async () => {
     // --------------------------------------------------------
     const limit = Number(document.getElementById('limit').value);
     if (!Number.isInteger(limit) || limit < 1 || limit > 500) {
-        alert('Số lượng bài đăng phải là số nguyên từ 1 đến 500.');
+        alert('Số lượng profile tối đa mỗi truy vấn phải là số nguyên từ 1 đến 500.');
         return;
     }
     // --------------------------------------------------------
@@ -229,45 +218,37 @@ runBtn.addEventListener('click', async () => {
     const verifiedSelection = getCheckedValue('filterVerified', 'any');
     const verifiedFilter = verifiedSelection === 'not_verified' ? 'not-verified' : verifiedSelection;
     // --------------------------------------------------------
-    // FOLLOWERS FILTER
+    // AVERAGE LIKES FILTER
     // --------------------------------------------------------
-    const isFilteredByFollowers = getCheckedValue('filterFollowers', 'no') === 'yes';
-    if (isFilteredByFollowers && !validateFollowers()) {
+    const isFilteredByAverageLikes = getCheckedValue('filterAverageLikes', 'no') === 'yes';
+    if (isFilteredByAverageLikes && !validateAverageLikes()) {
         return;
     }
-    const minFollowersText = document.getElementById('minFollowers').value.trim();
-    const maxFollowersText = document.getElementById('maxFollowers').value.trim();
-    // --------------------------------------------------------
-    // DATE RANGE
-    // --------------------------------------------------------
-    const dateMode = getCheckedValue('dateMode', 'all');
-    const dateRange = dateMode === 'custom' ? getCheckedValue('dateRange', '1d') : undefined;
+    const minAverageLikesText = document.getElementById('minAverageLikes').value.trim();
+    const maxAverageLikesText = document.getElementById('maxAverageLikes').value.trim();
     // --------------------------------------------------------
     // BUILD REQUEST
     // --------------------------------------------------------
-    // Không gửi likes/videoCount vì Instagram
-    // không có các bộ lọc này.
+    // Không gửi likes/videoCount/dateRange vì Instagram Actor
+    // không trả về hoặc không hỗ trợ các dữ liệu này.
     const payload = {
         platform: 'instagram',
         queries,
         searchType,
         limit,
         verifiedFilter,
-        isFilteredByFollowers,
+        isFilteredByAverageLikes,
+        cookies,
     };
-    // Chỉ gửi giá trị followers khi người dùng bật bộ lọc
+    // Chỉ gửi giá trị averageLikes khi người dùng bật bộ lọc
     // và nhập giá trị tương ứng.
-    if (isFilteredByFollowers) {
-        if (minFollowersText !== '') {
-            payload.minFollowers = Number(minFollowersText);
+    if (isFilteredByAverageLikes) {
+        if (minAverageLikesText !== '') {
+            payload.minAverageLikes = Number(minAverageLikesText);
         }
-        if (maxFollowersText !== '') {
-            payload.maxFollowers = Number(maxFollowersText);
+        if (maxAverageLikesText !== '') {
+            payload.maxAverageLikes = Number(maxAverageLikesText);
         }
-    }
-    // Không gửi dateRange nếu chọn "Tất cả".
-    if (dateRange) {
-        payload.dateRange = dateRange;
     }
     // --------------------------------------------------------
     // CALL API
@@ -300,10 +281,8 @@ runBtn.addEventListener('click', async () => {
         result.innerHTML = `
             <div class="summary">
                 Tìm thấy
-                <strong>${Number(data.count ?? 0)}</strong>
-                bài đăng từ
                 <strong>${Number(data.creatorCount ?? 0)}</strong>
-                ${pluralize(data.creatorCount, 'creator')}
+                ${pluralize(data.creatorCount, 'creator')}!
             </div>
 
             <div class="download-section">
