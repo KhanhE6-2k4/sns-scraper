@@ -1,12 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { query } from '../../db/index.js';
-
-const ALLOWED_PLATFORMS = [
-  'tiktok',
-  'instagram',
-  'youtube',
-];
+import { isSupportedPlatform } from '../../config/platforms.js';
 
 const ALLOWED_FILES = {
   'results.json': 'results.json',
@@ -15,7 +10,7 @@ const ALLOWED_FILES = {
 
 export class DownloadService {
   getAllowedPlatform(platform) {
-    return ALLOWED_PLATFORMS.includes(platform)
+    return isSupportedPlatform(platform)
       ? platform
       : null;
   }

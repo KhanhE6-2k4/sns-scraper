@@ -321,6 +321,16 @@ a:focus-visible {
     flex-direction: column;
     padding: 22px;
     box-shadow: none;
+    height: 100%; /* Đảm bảo các card trong cùng một hàng luôn cao bằng nhau */
+}
+
+.platform-card p {
+    flex-grow: 1;
+    margin-bottom: 16px;
+}
+
+.platform-card .text-link {
+    margin-top: auto;
 }
 
 .platform-top {

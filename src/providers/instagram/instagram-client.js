@@ -93,7 +93,7 @@ export class InstagramClient {
     }
 
     if (getDateRange(dateRange)?.dateFrom) {
-      input.untils = getDateRange(dateRange).dateFrom;
+      input.until = getDateRange(dateRange).dateFrom;
     }
 
     console.log('Input:');
@@ -117,7 +117,7 @@ export class InstagramClient {
     }
 
     if (getDateRange(dateRange)?.dateFrom) {
-      input.untils = getDateRange(dateRange).dateFrom;
+      input.until = getDateRange(dateRange).dateFrom;
     }
 
     console.log('Input:');

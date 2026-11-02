@@ -226,6 +226,12 @@ function setupFilterToggle(name, optionsId) {
 setupFilterToggle('filterFollowers', 'followersOptions');
 setupFilterToggle('filterLikes', 'likesOptions');
 setupFilterToggle('filterVideoCount', 'videoCountOptions');
+// ============================================================
+// HELPERS
+// ============================================================
+function getCheckedValue(name, fallback = '') {
+    return document.querySelector(`input[name="${name}"]:checked`)?.value ?? fallback;
+}
 
 function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -235,6 +241,11 @@ function escapeHtml(value) {
         '"': '&quot;',
         "'": '&#39;',
     })[char]);
+}
+
+// Thêm "s" cho danh từ tiếng Anh khi số lượng khác 1 (0 videos, 1 video, 2 videos).
+function pluralize(count, word) {
+    return Number(count) === 1 ? word : `${word}s`;
 }
 // ============================================================
 // START TIKTOK DISCOVERY
@@ -247,7 +258,7 @@ runBtn.addEventListener('click', async () => {
     // --------------------------------------------------------
     // SEARCH TYPE
     // --------------------------------------------------------
-    const searchType = document.querySelector('input[name="searchType"]:checked').value;
+    const searchType = getCheckedValue('searchType', 'keyword');
     // --------------------------------------------------------
     // KEYWORDS / HASHTAGS
     // --------------------------------------------------------
@@ -267,18 +278,18 @@ runBtn.addEventListener('click', async () => {
     // --------------------------------------------------------
     // SORT
     // --------------------------------------------------------
-    const sortBy = document.querySelector('input[name="sort"]:checked').value;
+    const sortBy = getCheckedValue('sort', 'relevance');
     // --------------------------------------------------------
     // VERIFIED
     // --------------------------------------------------------
-    const verifiedSelection = document.querySelector('input[name="filterVerified"]:checked').value;
+    const verifiedSelection = getCheckedValue('filterVerified', 'any');
     const verifiedFilter = verifiedSelection === 'not_verified' ? 'not-verified' : verifiedSelection;
     // --------------------------------------------------------
     // FILTERS
     // --------------------------------------------------------
-    const isFilteredByFollowers = document.querySelector('input[name="filterFollowers"]:checked').value === 'yes';
-    const isFilteredByLikes = document.querySelector('input[name="filterLikes"]:checked').value === 'yes';
-    const isFilteredByVideoCount = document.querySelector('input[name="filterVideoCount"]:checked').value === 'yes';
+    const isFilteredByFollowers = getCheckedValue('filterFollowers', 'no') === 'yes';
+    const isFilteredByLikes = getCheckedValue('filterLikes', 'no') === 'yes';
+    const isFilteredByVideoCount = getCheckedValue('filterVideoCount', 'no') === 'yes';
     if (isFilteredByFollowers && !validateFollowers()) {
         return;
     }
@@ -293,8 +304,8 @@ runBtn.addEventListener('click', async () => {
     // --------------------------------------------------------
     // DATE RANGE
     // --------------------------------------------------------
-    const dateMode = document.querySelector('input[name="dateMode"]:checked').value;
-    const dateRange = dateMode === 'custom' ? document.querySelector('input[name="dateRange"]:checked').value : undefined;
+    const dateMode = getCheckedValue('dateMode', 'all');
+    const dateRange = dateMode === 'custom' ? getCheckedValue('dateRange', '1d') : undefined;
     // --------------------------------------------------------
     // BUILD PAYLOAD
     // --------------------------------------------------------
@@ -373,9 +384,9 @@ runBtn.addEventListener('click', async () => {
             <div class="summary">
                 Tìm thấy
                 <strong>${Number(data.count ?? 0)}</strong>
-                videos từ
+                ${pluralize(data.count, 'video')} từ
                 <strong>${Number(data.creatorCount ?? 0)}</strong>
-                creators
+                ${pluralize(data.creatorCount, 'creator')}
             </div>
 
             <div class="download-section">
